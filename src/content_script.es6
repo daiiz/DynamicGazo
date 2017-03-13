@@ -1,3 +1,4 @@
+var APP_PREFIX = 'dynamic_gazo';
 var sendChromeMsg = (json, callback) => {
     chrome.runtime.sendMessage(json, callback);
 };
@@ -74,15 +75,16 @@ class ScreenShot {
     setCropper (boxParams=[], $scrapboxSelectBox=null) {
         var $cropper = this.$genCropper();
         var closeBtnImg = chrome.extension.getURL('x.png');
-        var $closeBtn = $('<div id="daiz-ss-cropper-close"></div>');
-        var $captureBtn = $('<div id="daiz-ss-cropper-capture">Capture</div>');
+        var $closeBtn = $(`<div id="${APP_PREFIX}-daiz-ss-cropper-close" class="daiz-ss-cropper-close"></div>`);
+        var $captureBtn = $(`<div id="${APP_PREFIX}-daiz-ss-cropper-capture" 
+            class="daiz-ss-cropper-capture">Capture</div>`);
         var $scrapboxBtn = $('<div id="daiz-ss-cropper-scrapbox">Scrap</div>');
         $closeBtn.css({
             'background-image': `url(${closeBtnImg})`
         });
 
         $cropper[0].className = 'daiz-ss-cropper-main';
-        $cropper[0].id = 'daiz-ss-cropper-main';
+        $cropper[0].id = `${APP_PREFIX}-daiz-ss-cropper-main`;
         // 切り抜きボックスの位置を初期化
         if (boxParams.length === 0) {
             $cropper.css({
@@ -126,7 +128,7 @@ class ScreenShot {
     }
 
     _setRects () {
-        var $cropper = $('#daiz-ss-cropper-main');
+        var $cropper = $(`#${APP_PREFIX}-daiz-ss-cropper-main`);
         var rect = $cropper[0].getBoundingClientRect();
         if (rect === undefined) return;
         this.removeCropper();
@@ -322,7 +324,7 @@ class ScreenShot {
         });
 
         // 撮影ボタンがクリックされたとき
-        $('body').on('click', '#daiz-ss-cropper-capture', () => {
+        $('body').on('click', `#${APP_PREFIX}-daiz-ss-cropper-capture`, () => {
             this.capture('capture');
         });
 
@@ -334,7 +336,7 @@ class ScreenShot {
         });
 
         // 切り抜きボックスの閉じるボタンがクリックされたとき
-        $('body').on('click', '#daiz-ss-cropper-close', ev => {
+        $('body').on('click', `#${APP_PREFIX}-daiz-ss-cropper-close`, ev => {
             this.removeCropper();
             this.removeCropperMain();
             this.fixHtml(false);
