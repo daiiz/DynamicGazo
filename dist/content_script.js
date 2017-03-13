@@ -21,6 +21,7 @@ var ScreenShot = function () {
             // 右クリックされた画像要素
             '$contextMenuImg': []
         };
+        this.inlineViewer = null;
     }
 
     _createClass(ScreenShot, [{
@@ -417,13 +418,12 @@ var ss = new ScreenShot();
 chrome.extension.onRequest.addListener(function (request, sender, sendResponse) {
     var mark = "chrome-ext";
     if (request.event === 'updated-location-href') {
-        setCLinkMenu();
-
         var $body = $('body');
         if ($body.length > 0) {
             $body[0].dataset.stat_daiz_svgss = mark;
         }
-
-        new InlineViewer();
+        if (ss.inlineViewer === null) {
+            ss.inlineViewer = new InlineViewer();
+        }
     }
 });
