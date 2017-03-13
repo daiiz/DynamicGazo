@@ -369,23 +369,6 @@ class ScreenShot {
 }
 var ss = new ScreenShot();
 
-/** c-link **/
-var setCLinkMenu = () => {
-    var url = window.location.href;
-    var serviceName = CLink.matchUrl(url);
-    if (serviceName) {
-        if (serviceName === 'GyazoSearch') {
-            cc.GyazoSearch();
-        }else if (serviceName === 'Gyazo') {
-            cc.Gyazo();
-        }else if (serviceName === 'GooglePhoto') {
-            cc.GooglePhoto();
-        }else if (serviceName === 'GoogleDriveFolders') {
-            cc.GoogleDriveFolders();
-        }
-    }
-};
-
 chrome.extension.onRequest.addListener((request, sender, sendResponse) => {
     var mark = "chrome-ext";
     if (request.event === 'updated-location-href') {
