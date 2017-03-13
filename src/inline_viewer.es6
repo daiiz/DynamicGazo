@@ -4,33 +4,33 @@
  */
 class InlineViewer {
   constructor () {
-    this.appHost = 'svgscreenshot.appspot.com';
     this.appUrl = 'https://svgscreenshot.appspot.com';
-    this.appImg = 'c/g/';
-    this.contentBaseUrl = `${this.appUrl}/g`;
+    this.gyazo = 'https://gyazo.com';
     this.gyazoImageUrlPatterns = [
-      'https://gyazo.com/(.+)/raw',
-      'https://i.gyazo.com/(.+)'
+      '//gyazo.com/(.+)/raw',
+      '//i.gyazo.com/(.+)'
     ];
-    /* 直近で検出した画像のGyazoID */
-    this.latestGyazoImageId = null;
+    this.svgScreenShotUrlPatterns = [
+      `${this.appUrl}/c/x/(.+)`
+    ];
+    /* 直近で検出した画像のID */
+    this.latestImageId = null;
     this.hideAllSVGScreenShots();
     this.bindEvents();
   }
 
-  detectGyazoImageId (src) {
+  detectImageId (src, urlPatterns) {
     let imgId = null;
-    for (let i = 0; i < this.gyazoImageUrlPatterns.length; i++) {
-      let pattern = this.gyazoImageUrlPatterns[i];
+    for (let i = 0; i < urlPatterns.length; i++) {
+      let pattern = urlPatterns[i];
       let reg = new RegExp(pattern);
       let matched = src.match(reg);
       if (matched && matched.length >= 2) {
-        imgId = matched[1];
+        imgId = matched[1].split('.')[0];
         break;
       }
     }
-
-    imgId = imgId.split('.')[0];
+    if (imgId === null) return null;
     if (imgId.indexOf('/') !== -1) return null;
     return imgId;
   }
@@ -52,7 +52,8 @@ class InlineViewer {
         <div class="daiz-ss-iv-svg">
         </div>
         <div class="daiz-ss-iv-cover-foot">
-          <a href="#" class="svgss" target="_blank">SVG ScreenShot</a>
+          <a href="#" class="svgss footlink" target="_blank">DynamicGazo</a>
+          <a href="#" class="gyazo footlink" target="_blank">Gyazo</a>
           <a href="#" class="jump" target="_blank">Original site</a>
         </div>
       </div>`);
@@ -73,25 +74,25 @@ class InlineViewer {
   }
 
   // SVGコンテンツを表示する
-  renderSVGScreenShot ($cover, cid='') {
+  renderSVGScreenShot ($cover, cid='', appImg='d/g') {
     var cover = $cover[0];
     var coverWidth = $cover.width();
     var coverHeight = $cover.height();
     var $svgArea = $cover.find('.daiz-ss-iv-svg');
-    var appImg = this.appImg;
-    var svgUrl = `${this.appUrl}/${appImg}${cid}.svg`;
-    console.info(svgUrl);
+    var svgUrl = `${this.appUrl}/${appImg}/${cid}`;
 
     $.ajax({
       url: svgUrl,
-      dataType: "text"
-    }).success(svgTag => {
+      method: "POST",
+      dataType: "json"
+    }).success(data => {
+      let svgTag = data.svg_tag;
       if (svgTag.length === 0) return;
       var doc = new DOMParser().parseFromString(svgTag, 'application/xml');
       $svgArea[0].appendChild(cover.ownerDocument.importNode(doc.documentElement, true));
       var svg = cover.querySelector('svg.svg-screenshot');
-      var orgUrl = svg.getAttribute('data-url');
-      var title = svg.getAttribute('data-title');
+      var orgUrl = data.url;
+      var title = data.title;
       // SVGレイヤーのサイズを設定
       // viewBox.width, viewBox.height: SVGのオリジナルサイズ
       // coverWidth, coverHeight: サムネイルのサイズ
@@ -102,7 +103,8 @@ class InlineViewer {
       var $cFoot = $cover.find('.daiz-ss-iv-cover-foot');
       $cFoot.find('a.jump').attr('href', validateUrl(orgUrl));
       $cFoot.find('a.jump')[0].innerText = validateTitle(title);
-      $cFoot.find('a.svgss').attr('href', `${this.contentBaseUrl}/${cid}`);
+      $cFoot.find('a.svgss').attr('href', `${this.appUrl}/x/${data.screenshot_id}`);
+      $cFoot.find('a.gyazo').attr('href', `${this.gyazo}/${data.gyazo_image_id}`);
       $cFoot.show();
     });
   }
@@ -136,22 +138,28 @@ class InlineViewer {
     // 画像mouseenter時
     $body.on('mouseenter', 'img', e => {
       var $img = $(e.target).closest('img');
+
       // 対象画像であるかを確認
       var src = decodeURIComponent($img[0].src);
-      var gyazoImageId = self.detectGyazoImageId(src);
-
-      if (gyazoImageId !== this.latestGyazoImageId) {
-        this.latestGyazoImageId = gyazoImageId;
+      var imageId = self.detectImageId(src, self.gyazoImageUrlPatterns);
+      var appImg = 'd/g';
+      if (imageId === null) {
+        imageId = self.detectImageId(src, self.svgScreenShotUrlPatterns);
+        appImg = 'd/s';
       }
-      if (gyazoImageId === null) return;
+
+      if (imageId === null) return;
+      if (imageId !== this.latestImageId) {
+        this.latestImageId = imageId;
+      }
 
       self.hideAllSVGScreenShots();
-      var coverInfo = self.$getCover(gyazoImageId, $img);
+      var coverInfo = self.$getCover(imageId, $img);
       var $cover = coverInfo[0];
       if (coverInfo[1]) {
         // 新規作成されたカバー
         $body.append($cover);
-        self.renderSVGScreenShot($cover, gyazoImageId);
+        self.renderSVGScreenShot($cover, imageId, appImg);
       }else {
         self.updateSVGScreenShotSize($cover, $img);
       }

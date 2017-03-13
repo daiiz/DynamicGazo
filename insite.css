@@ -52,6 +52,7 @@
     overflow-x: hidden;
     overflow-y: hidden;
     background-color: rgba(0, 0, 0 ,0);
+    border-radius: 1px;
 }
 
 .daiz-ss-iv-svg {
@@ -84,13 +85,13 @@
     display: none;
 }
 
-.daiz-ss-iv-cover-foot a.svgss{
+.daiz-ss-iv-cover-foot a.footlink{
     font-size: 11px;
     text-decoration: none;
     color: #888;
 }
 
-.daiz-ss-iv-cover-foot a.svgss:hover{
+.daiz-ss-iv-cover-foot a.footlink:hover{
     text-decoration: underline;
     color: #2962FF;
 }
