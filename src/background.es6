@@ -61,7 +61,6 @@
 
   // スクリーンショットをアップロードする
   var uploader = (svgtag, svgBgBase64Img) => {
-    var pub = 'yes';
     SITE_TITLE = svgtag.getAttribute('data-title') || '';
     SITE_URL = svgtag.getAttribute('data-url') || '';
 
@@ -77,7 +76,8 @@
         orgurl: SITE_URL,
         title: SITE_TITLE,
         viewbox: svgtag.getAttribute('viewBox'),
-        public: pub
+        public: 'yes',
+        gyazo: 'yes'
       })
     }).success (data => {
       var stat = data.status;
