@@ -5,7 +5,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 /**
- * ウェブページ中で SVG ScreenShot のプレビューを展開する
+ * ウェブページ中で DynamicGazo のプレビューを展開する
  * 対象画像をホバーしたときにSVGコンテンツを重ねて表示する
  */
 

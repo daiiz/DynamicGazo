@@ -2,7 +2,7 @@
   var SVGSCREENSHOT_APP = 'https://svgscreenshot.appspot.com';
   var SVGSCREENSHOT_DEV = '';
 
-  
+
   /**
    * MODE
    * - capture: 撮影して保存
@@ -237,7 +237,7 @@
     // ユーザーが閲覧中のページに専用の右クリックメニューを設ける
     // ウェブページ向け
     chrome.contextMenus.create({
-      title: getContextMenuTitle('SVGスクリーンショットを撮る'),
+      title: getContextMenuTitle('DynamicGazoを撮る'),
       contexts: [
         'page',
         'selection'
@@ -251,7 +251,7 @@
     });
     // ウェブページ上の画像向け
     chrome.contextMenus.create({
-      title: getContextMenuTitle('SVGスクリーンショットを撮る'),
+      title: getContextMenuTitle('DynamicGazoを撮る'),
       contexts: [
         'image'
       ],

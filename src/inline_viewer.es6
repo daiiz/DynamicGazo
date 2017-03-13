@@ -1,5 +1,5 @@
 /**
- * ウェブページ中で SVG ScreenShot のプレビューを展開する
+ * ウェブページ中で DynamicGazo のプレビューを展開する
  * 対象画像をホバーしたときにSVGコンテンツを重ねて表示する
  */
 class InlineViewer {
