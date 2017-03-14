@@ -64,7 +64,8 @@ var InlineViewer = function () {
 
         $cover.css({
           width: $img.width(),
-          height: $img.height()
+          height: $img.height(),
+          display: 'none'
         });
       }
 
@@ -117,7 +118,12 @@ var InlineViewer = function () {
         $cFoot.find('a.jump')[0].innerText = validateTitle(title);
         $cFoot.find('a.svgss').attr('href', _this.appUrl + '/x/' + data.screenshot_id);
         $cFoot.find('a.gyazo').attr('href', _this.gyazo + '/' + data.gyazo_image_id);
+        if (!data.gyazo_image_id) {
+          $cFoot.find('a.gyazo').hide();
+        }
+
         $cFoot.show();
+        $cover.show();
       });
     }
 
@@ -126,6 +132,8 @@ var InlineViewer = function () {
   }, {
     key: 'updateSVGScreenShotSize',
     value: function updateSVGScreenShotSize($cover, $img) {
+      if ($cover.find('.daiz-ss-iv-svg')[0].innerHTML.trim() === '') return;
+
       var w = $img.width();
       var h = $img.height();
       $cover.css({

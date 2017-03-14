@@ -60,7 +60,8 @@ class InlineViewer {
 
       $cover.css({
         width: $img.width(),
-        height: $img.height()
+        height: $img.height(),
+        display: 'none'
       });
     }
 
@@ -105,12 +106,19 @@ class InlineViewer {
       $cFoot.find('a.jump')[0].innerText = validateTitle(title);
       $cFoot.find('a.svgss').attr('href', `${this.appUrl}/x/${data.screenshot_id}`);
       $cFoot.find('a.gyazo').attr('href', `${this.gyazo}/${data.gyazo_image_id}`);
+      if (!data.gyazo_image_id) {
+        $cFoot.find('a.gyazo').hide();
+      }
+
       $cFoot.show();
+      $cover.show();
     });
   }
 
   // SVGコンテンツを最新のサムネイルのサイズに合わせる
   updateSVGScreenShotSize ($cover, $img) {
+    if ($cover.find('.daiz-ss-iv-svg')[0].innerHTML.trim() === '') return;
+
     var w = $img.width();
     var h = $img.height();
     $cover.css({
