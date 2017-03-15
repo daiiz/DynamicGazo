@@ -60,7 +60,11 @@ var InlineViewer = function () {
       // 存在しない場合は新規作成する
       if ($cover.length === 0) {
         newCover = true;
-        $cover = $('<div id="' + coverId + '" class="daiz-ss-iv-cover">\n        <div class="daiz-ss-iv-svg">\n        </div>\n        <div class="daiz-ss-iv-cover-foot">\n          <a href="#" class="svgss footlink" target="_blank">DynamicGazo</a>\n          <a href="#" class="gyazo footlink" target="_blank">Gyazo</a>\n          <a href="#" class="jump" target="_blank">Original site</a>\n        </div>\n      </div>');
+        var optionClassName = '';
+        if (window.location.host === 'gyazo.com') {
+          optionClassName = 'gyazo-com';
+        }
+        $cover = $('<div id="' + coverId + '" class="daiz-ss-iv-cover ' + optionClassName + '">\n        <div class="daiz-ss-iv-svg">\n        </div>\n        <div class="daiz-ss-iv-cover-foot">\n          <a href="#" class="svgss footlink" target="_blank">DynamicGazo</a>\n          <a href="#" class="gyazo footlink" target="_blank">Gyazo</a>\n          <a href="#" class="jump" target="_blank">Original site</a>\n        </div>\n      </div>');
 
         $cover.css({
           width: $img.width(),

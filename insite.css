@@ -55,6 +55,11 @@
     border-radius: 1px;
 }
 
+.gyazo-com {
+    z-index: 999;
+    border: 1px solid #fff;
+}
+
 .daiz-ss-iv-svg {
     width: 100%;
     height: 100%;

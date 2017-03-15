@@ -48,7 +48,11 @@ class InlineViewer {
     // 存在しない場合は新規作成する
     if ($cover.length === 0) {
       newCover = true;
-      $cover = $(`<div id="${coverId}" class="daiz-ss-iv-cover">
+      var optionClassName = '';
+      if (window.location.host === 'gyazo.com') {
+        optionClassName = 'gyazo-com'
+      }
+      $cover = $(`<div id="${coverId}" class="daiz-ss-iv-cover ${optionClassName}">
         <div class="daiz-ss-iv-svg">
         </div>
         <div class="daiz-ss-iv-cover-foot">
