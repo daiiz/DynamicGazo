@@ -37,14 +37,23 @@
   document.querySelector('#img').addEventListener('click', function () {
     window.close();
   });
-
+  
+  // スクリーンショット撮影領域指定
   document.querySelector('#btn-show-cropper').addEventListener('click', function () {
-    console.info("22");
     chrome.tabs.getSelected(null, function (tab) {
-      console.info(tab);
       clearBadge();
       chrome.tabs.sendRequest(tab.id, {
         event: 'click-context-menu'
+      });
+      window.close();
+    });
+  });
+
+  // リンクカードを作成
+  document.querySelector('#btn-make-card-scrapbox').addEventListener('click', function () {
+    chrome.tabs.getSelected(null, function (tab) {
+      chrome.tabs.sendRequest(tab.id, {
+        event: 'make-card-scrapbox'
       });
       window.close();
     });

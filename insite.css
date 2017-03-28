@@ -172,3 +172,67 @@
     left: 50px;
     height: 20px;
 }
+
+
+.card-area {
+    position: fixed;
+    background-color: #fff;
+    top: 0;
+    right: 0;
+    width: 220px;
+    height: 220px;
+    padding: 28px;
+    border-left: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    box-sizing: border-box;
+    z-index: 10000;
+}
+
+.card-a {
+    position: absolute;
+    font-size: 13px;
+    line-height: 18px;
+    height: 36px;
+    color: #4e505d;
+    overflow: hidden;
+    top: 36px;
+    left: 36px;
+    width: 139px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    cursor: pointer;
+}
+
+.card-a a {
+    color: #4e505d !important;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    overflow: hidden;
+    text-decoration: none !important;
+}
+
+.card-a a:hover {
+    text-decoration: none !important;
+}
+
+.card-thumbnail {
+    position: absolute;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    box-sizing: border-box;
+    width: 145px;
+    height: 111px;
+    top: 83px;
+    left: 33px;
+}
+
+.card-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgb(119, 119, 119);
+    border-radius: 50%;
+    padding: 3px;
+    cursor: pointer;
+}

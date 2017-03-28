@@ -92,6 +92,7 @@ class InlineViewer {
       dataType: "json"
     }).success(data => {
       let svgTag = data.svg_tag;
+      let appName = data.app_name || null;
       if (svgTag.length === 0) return;
       var doc = new DOMParser().parseFromString(svgTag, 'application/xml');
       $svgArea[0].appendChild(cover.ownerDocument.importNode(doc.documentElement, true));
@@ -112,6 +113,9 @@ class InlineViewer {
       $cFoot.find('a.gyazo').attr('href', `${this.gyazo}/${data.gyazo_image_id}`);
       if (!data.gyazo_image_id) {
         $cFoot.find('a.gyazo').hide();
+      }
+      if (appName === null) {
+        $cFoot.hide();
       }
 
       $cFoot.show();

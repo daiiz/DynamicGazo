@@ -104,6 +104,7 @@ var InlineViewer = function () {
         dataType: "json"
       }).success(function (data) {
         var svgTag = data.svg_tag;
+        var appName = data.app_name || null;
         if (svgTag.length === 0) return;
         var doc = new DOMParser().parseFromString(svgTag, 'application/xml');
         $svgArea[0].appendChild(cover.ownerDocument.importNode(doc.documentElement, true));
@@ -124,6 +125,9 @@ var InlineViewer = function () {
         $cFoot.find('a.gyazo').attr('href', _this.gyazo + '/' + data.gyazo_image_id);
         if (!data.gyazo_image_id) {
           $cFoot.find('a.gyazo').hide();
+        }
+        if (appName === null) {
+          $cFoot.hide();
         }
 
         $cFoot.show();

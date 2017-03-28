@@ -14,6 +14,9 @@ class ScreenShot {
             '$contextMenuImg': []
         };
         this.inlineViewer = null;
+
+        // アプリケーションとしてSVG撮影を使う場合，アプリ名がセットされる
+        this.app = null;
     }
 
     renderCropper (boxParams=[]) {
@@ -183,7 +186,7 @@ class ScreenShot {
                     $('body').append($cropper);
                     aTagRects.push(pos);
                     idx += 1;
-                    console.info('[END] cover hovered a-tag');
+                    //console.info('[END] cover hovered a-tag');
                 }
             }
         }
@@ -302,7 +305,8 @@ class ScreenShot {
                     options: {
                         sitedata: self.linkdata,
                         mode: mode,
-                        scrapbox_box_id: scrapboxBoxId
+                        scrapbox_box_id: scrapboxBoxId,
+                        app: self.app
                     }
                 });
             }
@@ -311,40 +315,49 @@ class ScreenShot {
 
     bindEvents () {
         var self = this;
-
-        // 画像上での右クリックを追跡
-        $('body').on('contextmenu', 'img', ev => {
-            var $img = $(ev.target).closest('img');
-            self.tmp.$contextMenuImg = $img;
-        });
+        var $body = $('body');
 
         // cropperがクリックされたとき
         // 自身を消去する
-        $('body').on('click', '.daiz-ss-cropper', ev => {
+        $body.on('click', '.daiz-ss-cropper', ev => {
             $(ev.target).closest('.daiz-ss-cropper').remove();
         });
 
         // 撮影ボタンがクリックされたとき
-        $('body').on('click', `#${APP_PREFIX}-daiz-ss-cropper-capture`, () => {
+        $body.on('click', `#${APP_PREFIX}-daiz-ss-cropper-capture`, () => {
             this.capture('capture');
         });
 
         // 撮影してScrapboxのページを作成するボタンが
         // クリックされたとき
-        $('body').on('click', '#daiz-ss-cropper-scrapbox', ev => {
+        $body.on('click', '#daiz-ss-cropper-scrapbox', ev => {
             var scrapboxBoxId = $('#daiz-ss-cropper-scrap-select').val() || '';
             this.capture('scrap', scrapboxBoxId);
         });
 
         // 切り抜きボックスの閉じるボタンがクリックされたとき
-        $('body').on('click', `#${APP_PREFIX}-daiz-ss-cropper-close`, ev => {
+        $body.on('click', `#${APP_PREFIX}-daiz-ss-cropper-close`, ev => {
             this.removeCropper();
             this.removeCropperMain();
             this.fixHtml(false);
         });
 
+        // 画像上での右クリックを追跡
+        $body.on('contextmenu', 'img', ev => {
+            var $img = $(ev.target).closest('img');
+            this.app = null;
+            this.tmp.$contextMenuImg = $img;
+        });
+
+        $body.on('contextmenu', '.card-thumbnail', ev => {
+            var $img = $(ev.target).closest('.card-area').find('.card-img');
+            this.app = 'linkcard';
+            self.tmp.$contextMenuImg = $img;
+        });
+
         // ページでの右クリックを検出
         $(window).bind('contextmenu', (e) => {
+            this.app = null;
             this.positionLastRclick = [e.clientX, e.clientY];
         });
 
@@ -352,9 +365,11 @@ class ScreenShot {
         chrome.extension.onRequest.addListener((request, sender, sendResponse) => {
             var re = request.event;
             if (re === 'click-context-menu') {
-                if (request.elementType === 'image' && this.tmp.$contextMenuImg.length > 0) {
+                // 撮影領域を選択するやつを表示
+                if (request.elementType === 'image' || this.tmp.$contextMenuImg.length > 0) {
                     var $img = this.tmp.$contextMenuImg;
                     var imgRect = $img[0].getBoundingClientRect();
+                    this.tmp.$contextMenuImg = [];
                     this.renderCropper([
                         imgRect.left,
                         imgRect.top,
@@ -364,7 +379,28 @@ class ScreenShot {
                 }else {
                     this.renderCropper();
                 }
+            }else if (re === 'make-card-scrapbox') {
+                // リンクカードを作成
+                // ポップアップ画面から呼ばれる
+                var themeImg = chrome.extension.getURL('./linkcard/scrapbox_default.png');
+                var closeBtn = chrome.extension.getURL('x.png');
+                var $cardArea = $(`<div class="card-area"><img class="card-close" src="${closeBtn}"></div>`);
+                var $img = $(`<img src="${themeImg}" class="card-img">`);
+                var $title = $(`<div class="card-a"><a href="${window.location.href}">${document.title}</a></div>`);
+                var $thumbnail = $(`<div class="card-thumbnail"></div>`);
+                var ogImg = $('meta[property="og:image"]').attr('content');
+                if (ogImg) {
+                    $thumbnail.css('background-image', `url("${ogImg}")`);
+                }
+                $cardArea.append($img);
+                $cardArea.append($title);
+                $cardArea.append($thumbnail);
+                $body.append($cardArea);
             }
+        });
+
+        $body.on('click', '.card-close', ev => {
+            $('.card-area').remove();
         });
     }
 }

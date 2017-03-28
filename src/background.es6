@@ -12,6 +12,7 @@
   var SCRAP_BOX_ID = '';
   var SITE_TITLE = '';
   var SITE_URL = '';
+  var APP_NAME = ''; // アプリケーションとしてSVG撮影機能を使用する場合
 
   var showBrowserPopup = (itemUrl='', bgImg='', err=false, msg='') => {
     localStorage.item_url = itemUrl;
@@ -65,6 +66,7 @@
     SITE_URL = svgtag.getAttribute('data-url') || '';
 
     // Ajaxでapi/uploadsvgをたたく
+    console.info(APP_NAME);
     $.ajax({
       url: SVGSCREENSHOT_APP + '/api/uploadsvg',
       type: 'POST',
@@ -77,7 +79,8 @@
         title: SITE_TITLE,
         viewbox: svgtag.getAttribute('viewBox'),
         public: 'yes',
-        gyazo: 'yes'
+        gyazo: 'yes',
+        app_name: APP_NAME
       })
     }).success (data => {
       var stat = data.status;
@@ -201,6 +204,7 @@
       var linkdata = opts.sitedata;
       chrome.tabs.captureVisibleTab({format: 'png'}, function (dataUrl) {
         MODE = opts.mode;
+        APP_NAME = opts.app || '';
         SCRAP_BOX_ID = opts.scrapbox_box_id;
         renderImage(linkdata, dataUrl);
       });
