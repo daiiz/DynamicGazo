@@ -300,15 +300,18 @@ class ScreenShot {
         window.setTimeout(() => {
             if (scrapboxBoxId.length === 0) mode = 'capture';
             if (self.linkdata !== null) {
+                var appName = self.app;
+                self.app = null;
                 sendChromeMsg({
                     command: 'make-screen-shot',
                     options: {
                         sitedata: self.linkdata,
                         mode: mode,
                         scrapbox_box_id: scrapboxBoxId,
-                        app: self.app
+                        app: appName
                     }
                 });
+
             }
         }, 1000);
     }
@@ -345,7 +348,6 @@ class ScreenShot {
         // 画像上での右クリックを追跡
         $body.on('contextmenu', 'img', ev => {
             var $img = $(ev.target).closest('img');
-            this.app = null;
             this.tmp.$contextMenuImg = $img;
         });
 
@@ -357,7 +359,6 @@ class ScreenShot {
 
         // ページでの右クリックを検出
         $(window).bind('contextmenu', (e) => {
-            this.app = null;
             this.positionLastRclick = [e.clientX, e.clientY];
         });
 

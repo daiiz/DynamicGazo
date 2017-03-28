@@ -126,11 +126,12 @@ var InlineViewer = function () {
         if (!data.gyazo_image_id) {
           $cFoot.find('a.gyazo').hide();
         }
-        if (appName === null) {
+        if (appName !== null && appName.length > 0) {
           $cFoot.hide();
+        } else {
+          $cFoot.show();
         }
 
-        $cFoot.show();
         $cover.show();
       });
     }

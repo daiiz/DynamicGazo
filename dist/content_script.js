@@ -343,13 +343,15 @@ var ScreenShot = function () {
             window.setTimeout(function () {
                 if (scrapboxBoxId.length === 0) mode = 'capture';
                 if (self.linkdata !== null) {
+                    var appName = self.app;
+                    self.app = null;
                     sendChromeMsg({
                         command: 'make-screen-shot',
                         options: {
                             sitedata: self.linkdata,
                             mode: mode,
                             scrapbox_box_id: scrapboxBoxId,
-                            app: self.app
+                            app: appName
                         }
                     });
                 }
@@ -391,7 +393,6 @@ var ScreenShot = function () {
             // 画像上での右クリックを追跡
             $body.on('contextmenu', 'img', function (ev) {
                 var $img = $(ev.target).closest('img');
-                _this2.app = null;
                 _this2.tmp.$contextMenuImg = $img;
             });
 
@@ -403,7 +404,6 @@ var ScreenShot = function () {
 
             // ページでの右クリックを検出
             $(window).bind('contextmenu', function (e) {
-                _this2.app = null;
                 _this2.positionLastRclick = [e.clientX, e.clientY];
             });
 
