@@ -391,7 +391,12 @@ class ScreenShot {
                 var $thumbnail = $(`<div class="card-thumbnail"></div>`);
                 var ogImg = $('meta[property="og:image"]').attr('content');
                 if (ogImg) {
-                    $thumbnail.css('background-image', `url("${ogImg}")`);
+                    $thumbnail.css({
+                        'background-color': '#fff',
+                        'background-image': `url("${ogImg}")`
+                    });
+                }else {
+                    $thumbnail.css('background-color', 'rgba(0, 0, 0, 0)');
                 }
                 $cardArea.append($img);
                 $cardArea.append($title);
