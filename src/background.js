@@ -2,7 +2,6 @@
   var SVGSCREENSHOT_APP = 'https://svgscreenshot.appspot.com';
   var SVGSCREENSHOT_DEV = '';
 
-
   /**
    * MODE
    * - capture: 撮影して保存
