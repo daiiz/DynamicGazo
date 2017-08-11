@@ -298,6 +298,9 @@ class ScreenShot {
         // ページから不要なdivが消去されてからスクリーンショットを撮りたいので，
         // 1秒待ってから送信する
         window.setTimeout(() => {
+            // MacBook ProのRetinaディスプレイなどの高解像度な
+            // ディスプレイを使用している場合は1より大きな値となる
+            var rat = Math.max(window.devicePixelRatio, 1.0);
             if (scrapboxBoxId.length === 0) mode = 'capture';
             if (self.linkdata !== null) {
                 var appName = self.app;
@@ -308,7 +311,8 @@ class ScreenShot {
                         sitedata: self.linkdata,
                         mode: mode,
                         scrapbox_box_id: scrapboxBoxId,
-                        app: appName
+                        app: appName,
+                        dpr: rat
                     }
                 });
 
