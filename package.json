@@ -1,7 +1,10 @@
 {
-  "name": "DynamicGazo",
+  "name": "dynamic-gazo",
   "version": "1.0.0",
   "main": "index.js",
+  "engine": {
+    "node": "7.0.0"
+  },
   "repository": "git@github.com:daiz713/DynamicGazo.git",
   "author": "daiiz <da.iz.mg@gmail.com>",
   "license": "MIT",
