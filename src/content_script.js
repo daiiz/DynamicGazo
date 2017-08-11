@@ -317,7 +317,7 @@ class ScreenShot {
                 });
 
             }
-        }, 1000);
+        }, 900);
     }
 
     bindEvents () {

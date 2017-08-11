@@ -35,6 +35,15 @@
     });
   };
 
+  var setBadgeCaptureCompleted = () => {
+    chrome.browserAction.setBadgeBackgroundColor({
+      'color': '#4abb0c'
+    });
+    chrome.browserAction.setBadgeText({
+      'text': '○'
+    });
+  };
+
   var getSettings = () => {
     var s = null;
     if (localStorage.svgscreenshot_settings) {
@@ -206,7 +215,8 @@
     if (request.command === 'make-screen-shot') {
       // スクリーンショットの撮影
       var linkdata = opts.sitedata;
-      chrome.tabs.captureVisibleTab({format: 'png'}, function (dataUrl) {
+      chrome.tabs.captureVisibleTab({ format: 'png' }, function (dataUrl) {
+        setBadgeCaptureCompleted();
         MODE = opts.mode;
         APP_NAME = opts.app || '';
         SCRAP_BOX_ID = opts.scrapbox_box_id;
