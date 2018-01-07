@@ -71,6 +71,10 @@
     position: absolute;
 }
 
+.daiz-ss-iv-svg a {
+    cursor: pointer;
+}
+
 .daiz-ss-iv-rbar {
     width: 7px;
     height: 100%;
