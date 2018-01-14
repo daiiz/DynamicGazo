@@ -78,9 +78,9 @@ class ScreenShot {
     // 範囲指定のための長方形を表示する
     setCropper (boxParams=[], $scrapboxSelectBox=null) {
         var $cropper = this.$genCropper();
-        var closeBtnImg = chrome.extension.getURL('x.png');
+        var closeBtnImg = chrome.extension.getURL('./image/x.png');
         var $closeBtn = $(`<div id="${APP_PREFIX}-daiz-ss-cropper-close" class="daiz-ss-cropper-close"></div>`);
-        var $captureBtn = $(`<div id="${APP_PREFIX}-daiz-ss-cropper-capture" 
+        var $captureBtn = $(`<div id="${APP_PREFIX}-daiz-ss-cropper-capture"
             class="daiz-ss-cropper-capture">Capture</div>`);
         var $scrapboxBtn = $('<div id="daiz-ss-cropper-scrapbox">Scrap</div>');
         $closeBtn.css({
@@ -136,7 +136,7 @@ class ScreenShot {
         var rect = $cropper[0].getBoundingClientRect();
         if (rect === undefined) return;
         this.removeCropper();
-        this.linkdata = this.setRects(rect);
+        this.linkdata = this.setRects2(rect);
     }
 
     // ページ上で選択されている文字列を取得
@@ -145,6 +145,10 @@ class ScreenShot {
         var selection = window.getSelection();
         var text = selection.toString();
         return text;
+    }
+
+    setRects2 (croppedRect) {
+        console.log("###", croppedRect)
     }
 
     setRects (croppedRect) {
@@ -387,8 +391,8 @@ class ScreenShot {
             }else if (re === 'make-card-scrapbox') {
                 // リンクカードを作成
                 // ポップアップ画面から呼ばれる
-                var themeImg = chrome.extension.getURL('./linkcard/scrapbox_default.png');
-                var closeBtn = chrome.extension.getURL('x.png');
+                var themeImg = chrome.extension.getURL('.image/linkcard/scrapbox_default.png');
+                var closeBtn = chrome.extension.getURL('./image/x.png');
                 var $cardArea = $(`<div class="card-area"><img class="card-close" src="${closeBtn}"></div>`);
                 var $img = $(`<img src="${themeImg}" class="card-img">`);
                 var $title = $(`<div class="card-a"><a href="${window.location.href}">${document.title}</a></div>`);

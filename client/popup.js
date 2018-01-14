@@ -37,7 +37,7 @@
   document.querySelector('#img').addEventListener('click', function () {
     window.close();
   });
-  
+
   // スクリーンショット撮影領域指定
   document.querySelector('#btn-show-cropper').addEventListener('click', function () {
     chrome.tabs.getSelected(null, function (tab) {
