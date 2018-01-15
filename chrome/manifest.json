@@ -29,6 +29,7 @@
         "js": [
             "lib/jquery.js",
             "lib/jquery-ui.min.js",
+            "build/bundle.js",
             "build/common.js",
             "build/inline_viewer.js",
             "build/content_script.js"

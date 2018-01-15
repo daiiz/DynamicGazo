@@ -1,5 +1,7 @@
-var APP_PREFIX = 'dynamic_gazo';
-var sendChromeMsg = (json, callback) => {
+const APP_PREFIX = 'dynamic_gazo';
+const dynamicGazo = window.dynamicGazo
+
+const sendChromeMsg = (json, callback) => {
     chrome.runtime.sendMessage(json, callback);
 };
 
@@ -19,7 +21,7 @@ class ScreenShot {
         this.app = null;
     }
 
-    renderCropper (boxParams=[]) {
+    renderCropper (boxParams = []) {
         var self = this;
         chrome.runtime.sendMessage({
             command: 'get-scrapbox-list'
@@ -33,9 +35,9 @@ class ScreenShot {
                     var $opt = $(`<option value="${scrapboxId}">${scrapboxId}</option>`);
                     $select.append($opt);
                 }
-                self.setCropper(boxParams, $select);
+                self.initCropperMain(boxParams, $select);
             }else {
-                self.setCropper(boxParams, null);
+                self.initCropperMain(boxParams, null);
             }
         });
     }
@@ -76,7 +78,7 @@ class ScreenShot {
     }
 
     // 範囲指定のための長方形を表示する
-    setCropper (boxParams=[], $scrapboxSelectBox=null) {
+    initCropperMain (boxParams=[], $scrapboxSelectBox=null) {
         var $cropper = this.$genCropper();
         var closeBtnImg = chrome.extension.getURL('./image/x.png');
         var $closeBtn = $(`<div id="${APP_PREFIX}-daiz-ss-cropper-close" class="daiz-ss-cropper-close"></div>`);
@@ -111,7 +113,14 @@ class ScreenShot {
             $cropper.append($scrapboxSelectBox);
         }
         $cropper.append($closeBtn);
+        this.movable($cropper)
+        $('body').append($cropper);
 
+        // XXX: 以下を有効化しないとダメ
+        this._setRects();
+    }
+
+    movable ($cropper) {
         // ドラッグ可能にする
         $cropper.draggable({
             stop: (ev, ui) => {
@@ -126,9 +135,6 @@ class ScreenShot {
             },
             handles: "all"
         });
-
-        $('body').append($cropper);
-        this._setRects();
     }
 
     _setRects () {
@@ -136,7 +142,7 @@ class ScreenShot {
         var rect = $cropper[0].getBoundingClientRect();
         if (rect === undefined) return;
         this.removeCropper();
-        this.linkdata = this.setRects2(rect);
+        this.linkdata = this.setRects(rect);
     }
 
     // ページ上で選択されている文字列を取得
@@ -147,51 +153,47 @@ class ScreenShot {
         return text;
     }
 
-    setRects2 (croppedRect) {
-        console.log("###", croppedRect)
-    }
+    setRects (range) {
+        this.fixHtml(true)
+        const $cropperMain = $(this.removeCropperMain())
+        const anchorsInArea = new dynamicGazo.AnchorsInArea(document)
+        // anchorsInArea.options.onlyInTopLayer = false
+        const aTags = anchorsInArea.find(range)
 
-    setRects (croppedRect) {
-        this.fixHtml(true);
+        this.movable($cropperMain)
+        $('body').append($cropperMain)
 
         // リンク以外のテキスト:
         var text = this.getSelectedText();
         $('#daiz-ss-cropper-main').attr('title', text);
 
         // リンク: 切り抜かれた形内のみ，aタグを覆えばよい
-        var idx = 0;
-        var aTags = $('body').find('a');
         var aTagRects = [];
         for (var i = 0; i < aTags.length; i++) {
             var aTag = aTags[i];
-            var rect = aTag.getBoundingClientRect();
+            var rect = aTag.position
             if (rect !== undefined) {
-                // 検出したaタグが切り抜かれた領域内に完全に含まれているかを確認する
-                var fg = this.isInCroppedBox(rect, croppedRect);
-                if (fg) {
-                    // リンク要素の位置と大きさに合わせて，長方形カバーを被せる
-                    var $cropper = this.$genCropper();
-                    $cropper.css({
-                        width : rect.width,
-                        height: rect.height,
-                        left  : rect.left,
-                        top   : rect.top
-                    });
-                    var aid = 'daiz-ss-a' + idx;
-                    var pos = this.correctPosition(rect, croppedRect);
-                    pos.id = aid;
-                    pos.href = $(aTag).prop('href');
-                    pos.text = $(aTag)[0].innerText;
-                    pos.fontSize = $(aTag).css('font-size');
-                    pos.fontFamily = $(aTag).css('font-family');
+                // リンク要素の位置と大きさに合わせて，長方形カバーを被せる
+                const $cropper = this.$genCropper();
+                $cropper.css({
+                    width : rect.width,
+                    height: rect.height,
+                    left  : rect.left - window.scrollX,
+                    top   : rect.top - window.scrollY
+                });
+                var aid = `daiz-ss-a${i}`;
+                var pos = this.correctPosition(rect, range);
+                pos.id = aid;
+                pos.href = aTag.url;
+                pos.text = aTag.text;
+                // XXX: 本家にtagを返してもらう必要がある
+                // pos.fontSize = $(aTag).css('font-size');
+                // pos.fontFamily = $(aTag).css('font-family');
 
-                    $cropper.attr('title', $(aTag).attr('href'));
-                    $cropper.attr('id', aid);
-                    $('body').append($cropper);
-                    aTagRects.push(pos);
-                    idx += 1;
-                    //console.info('[END] cover hovered a-tag');
-                }
+                $cropper.attr('title', aTag.url);
+                $cropper.attr('id', aid);
+                $('body').append($cropper);
+                aTagRects.push(pos);
             }
         }
 
@@ -199,10 +201,10 @@ class ScreenShot {
         var pos_cropper = {
             x     : 0,
             y     : 0,
-            orgX  : croppedRect.left,
-            orgY  : croppedRect.top,
-            width : croppedRect.width,
-            height: croppedRect.height
+            orgX  : range.left,
+            orgY  : range.top,
+            width : range.width,
+            height: range.height
         };
 
         var title = document.title || '';
@@ -229,37 +231,16 @@ class ScreenShot {
         return res;
     }
 
-    isInCroppedBox(aTagRect, stageRect) {
-        var xa = stageRect.left;
-        var xb = stageRect.left + stageRect.width;
-        var ya = stageRect.top;
-        var yb = stageRect.top + stageRect.height;
-
-        var x1 = aTagRect.left;
-        var x2 = aTagRect.left + aTagRect.width;
-        var y1 = aTagRect.top;
-        var y2 = aTagRect.top + aTagRect.height;
-        var w  = x2 - x1;
-        var h  = y2 - y1;
-
-        var fgX = (xa <= x1 && x2 <= xb);
-        var fgY = (ya <= y1 && y2 <= yb);
-
-        if (fgX && fgY && w >= 5 && h >= 5) {
-            return true;
-        }
-        return false;
-    }
-
     // aタグの位置補正
     // stageRectの左端，上端を基準とした距離表現に直す
     // aTagRect ⊂ stageRect は保証されている
     correctPosition (aTagRect, stageRect) {
-        var res = {};
-        var x1 = aTagRect.left - stageRect.left;
-        var x2 = (aTagRect.left + aTagRect.width) - stageRect.left;
-        var y1 = aTagRect.top - stageRect.top;
-        var y2 = (aTagRect.top + aTagRect.height) - stageRect.top;
+        // XXX: scrollの扱いを詰める必要あり
+        let res = {};
+        const x1 = (aTagRect.left - window.scrollX) - stageRect.left;
+        // var x2 = (aTagRect.left + aTagRect.width) - stageRect.left;
+        const y1 = (aTagRect.top - window.scrollY) - stageRect.top;
+        // var y2 = (aTagRect.top + aTagRect.height) - stageRect.top;
         res = {
             x     : x1,
             y     : y1,
@@ -274,8 +255,17 @@ class ScreenShot {
         $('.daiz-ss-cropper').remove();
     }
 
+    getCropperMain () {
+        return $(".daiz-ss-cropper-main")[0]
+    }
+
     removeCropperMain () {
-        $(".daiz-ss-cropper-main").remove();
+        const $elem = $(".daiz-ss-cropper-main")
+        $elem.draggable('destroy')
+        $elem.resizable('destroy')
+        const copy = $elem[0].cloneNode(true)
+        $elem.remove();
+        return copy
     }
 
     capture (mode='capture', scrapboxBoxId='') {
