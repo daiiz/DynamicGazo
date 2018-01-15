@@ -157,6 +157,7 @@ class ScreenShot {
         this.fixHtml(true)
         const $cropperMain = $(this.removeCropperMain())
         const anchorsInArea = new dynamicGazo.AnchorsInArea(document)
+        anchorsInArea.options.detail = true
         // anchorsInArea.options.onlyInTopLayer = false
         const aTags = anchorsInArea.find(range)
 
@@ -186,9 +187,8 @@ class ScreenShot {
                 pos.id = aid;
                 pos.href = aTag.url;
                 pos.text = aTag.text;
-                // XXX: 本家にtagを返してもらう必要がある
-                // pos.fontSize = $(aTag).css('font-size');
-                // pos.fontFamily = $(aTag).css('font-family');
+                pos.fontSize = $(aTag.ref).css('font-size');
+                pos.fontFamily = $(aTag.ref).css('font-family');
 
                 $cropper.attr('title', aTag.url);
                 $cropper.attr('id', aid);
