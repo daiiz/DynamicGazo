@@ -18,7 +18,7 @@
     "watch:browserify": "./node_modules/.bin/watchify -t [ babelify ] src/index.js -o chrome/build/bundle.js -v"
   },
   "dependencies": {
-    "anchors-in-area": "github:daiz713/anchors-in-area#result-detail",
+    "anchors-in-area": "github:daiz713/anchors-in-area#master",
     "babel-cli": "^6.24.1",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-es2015": "^6.24.1",
