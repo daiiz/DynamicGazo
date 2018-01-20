@@ -47,6 +47,7 @@
         "pageCapture",
         "tabs",
         "activeTab",
+        "cookies",
         "<all_urls>"
     ],
     "version": "0.2.1"
