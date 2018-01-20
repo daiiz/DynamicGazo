@@ -35,7 +35,7 @@
     });
   };
 
-  var setBadgeCaptureCompleted = () => {
+  const setBadgeCaptureCompleted = () => {
     chrome.browserAction.setBadgeBackgroundColor({
       'color': '#4abb0c'
     });
@@ -43,6 +43,15 @@
       'text': '○'
     });
   };
+
+  const setBadgeCaptureGyazoCompleted = () => {
+    chrome.browserAction.setBadgeBackgroundColor({
+      'color': '#4abb0c'
+    });
+    chrome.browserAction.setBadgeText({
+      'text': 'G'
+    });
+  }
 
   var getSettings = () => {
     var s = null;
@@ -69,13 +78,22 @@
   };
 
   // スクリーンショットをアップロードする
-  var uploader = (svgtag, svgBgBase64Img, devicePixelRatio) => {
+  const uploadToDynamicGazo = async (svgtag, svgBgBase64Img, devicePixelRatio) => {
     SITE_TITLE = svgtag.getAttribute('data-title') || '';
     SITE_URL = svgtag.getAttribute('data-url') || '';
-    // Ajaxでapi/uploadsvgをたたく
-    console.info(APP_NAME, devicePixelRatio);
+
+    // post to gyazo.com
+    const gyazoImageId = await window.dynamicGazo.uploadToGyazo({
+      title: SITE_TITLE,
+      referer: SITE_URL,
+      image: svgBgBase64Img,
+      scale: devicePixelRatio,
+    })
+    await setBadgeCaptureGyazoCompleted()
+
+    // post to svgscreenshot.appspot.com
     $.ajax({
-      url: SVGSCREENSHOT_APP + '/api/uploadsvg',
+      url: `${SVGSCREENSHOT_APP}/api/uploadsvg`,
       type: 'POST',
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
@@ -87,6 +105,7 @@
         viewbox: svgtag.getAttribute('viewBox'),
         public: 'yes',
         gyazo: 'yes',
+        gyazo_image_id: gyazoImageId,
         dpr: devicePixelRatio,
         app_name: APP_NAME
       })
@@ -166,7 +185,7 @@
     img.setAttributeNS(null, 'data-selectedtext', text);
     img.setAttributeNS(hrefns, 'href', base64img);
 
-    rootSVGtag.appendChild(img);
+    // rootSVGtag.appendChild(img);
 
     // 外部ページヘのリンク用のrect elements
     for (var i = 0; i < aTagRects.length; i++) {
@@ -205,7 +224,7 @@
     rootSVGtag.setAttributeNS(null, 'data-title', validateTitle(title));
 
     // スクリーンショットをアップロード
-    uploader(rootSVGtag, base64img, devicePixelRatio);
+    uploadToDynamicGazo(rootSVGtag, base64img, devicePixelRatio);
   };
 
   // ポップアップ画面から命令を受ける
