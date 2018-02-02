@@ -179,8 +179,8 @@ class ScreenShot {
                 $cropper.css({
                     width : rect.width,
                     height: rect.height,
-                    left  : rect.page.left - window.scrollX,
-                    top   : rect.page.top - window.scrollY
+                    left  : rect.left,
+                    top   : rect.top
                 });
                 var aid = `daiz-ss-a${i}`;
                 var pos = this.correctPosition(rect, range);
@@ -237,9 +237,9 @@ class ScreenShot {
     correctPosition (aTagRect, stageRect) {
         // XXX: scrollの扱いを詰める必要あり
         let res = {};
-        const x1 = (aTagRect.page.left - window.scrollX) - stageRect.left;
+        const x1 = aTagRect.left - stageRect.left;
         // var x2 = (aTagRect.left + aTagRect.width) - stageRect.left;
-        const y1 = (aTagRect.page.top - window.scrollY) - stageRect.top;
+        const y1 = aTagRect.top - stageRect.top;
         // var y2 = (aTagRect.top + aTagRect.height) - stageRect.top;
         res = {
             x     : x1,
