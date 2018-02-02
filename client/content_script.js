@@ -139,10 +139,11 @@ class ScreenShot {
 
     _setRects () {
         var $cropper = $(`#${APP_PREFIX}-daiz-ss-cropper-main`);
-        var rect = $cropper[0].getBoundingClientRect();
-        if (rect === undefined) return;
+        const range= $cropper[0].getBoundingClientRect();
+        if (range === undefined) return;
         this.removeCropper();
-        this.linkdata = this.setRects(rect);
+        // range: scroll量を加味しないpx値
+        this.linkdata = this.setRects(range);
     }
 
     // ページ上で選択されている文字列を取得
@@ -158,7 +159,6 @@ class ScreenShot {
         const $cropperMain = $(this.removeCropperMain())
         const anchorsInArea = new dynamicGazo.AnchorsInArea(document)
         anchorsInArea.options.detail = true
-        // anchorsInArea.options.onlyInTopLayer = false
         const aTags = anchorsInArea.find(range)
 
         this.movable($cropperMain)
@@ -179,8 +179,8 @@ class ScreenShot {
                 $cropper.css({
                     width : rect.width,
                     height: rect.height,
-                    left  : rect.left - window.scrollX,
-                    top   : rect.top - window.scrollY
+                    left  : rect.page.left - window.scrollX,
+                    top   : rect.page.top - window.scrollY
                 });
                 var aid = `daiz-ss-a${i}`;
                 var pos = this.correctPosition(rect, range);
@@ -237,9 +237,9 @@ class ScreenShot {
     correctPosition (aTagRect, stageRect) {
         // XXX: scrollの扱いを詰める必要あり
         let res = {};
-        const x1 = (aTagRect.left - window.scrollX) - stageRect.left;
+        const x1 = (aTagRect.page.left - window.scrollX) - stageRect.left;
         // var x2 = (aTagRect.left + aTagRect.width) - stageRect.left;
-        const y1 = (aTagRect.top - window.scrollY) - stageRect.top;
+        const y1 = (aTagRect.page.top - window.scrollY) - stageRect.top;
         // var y2 = (aTagRect.top + aTagRect.height) - stageRect.top;
         res = {
             x     : x1,
