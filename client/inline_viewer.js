@@ -71,8 +71,9 @@ class InlineViewer {
 
     var imgRect = $img[0].getBoundingClientRect();
     $cover.css({
-        left: imgRect.left + pageX,
-        top: imgRect.top + pageY
+      left: imgRect.left + pageX,
+      top: imgRect.top + pageY,
+      cursor: $img.css('cursor') || 'default'
     });
 
     return [$cover, newCover];
@@ -152,9 +153,8 @@ class InlineViewer {
     var self = this;
     var $body = $('body');
 
-    // 画像mouseenter時
-    $body.on('mouseenter', 'img', e => {
-      var $img = $(e.target).closest('img');
+    const showLinkLayer = (e) => {
+      const $img = $(e.target).closest('img');
 
       // 対象画像であるかを確認
       var src = decodeURIComponent($img[0].src);
@@ -175,11 +175,23 @@ class InlineViewer {
       var $cover = coverInfo[0];
       if (coverInfo[1]) {
         // 新規作成されたカバー
+        $cover.on('click', event => {
+          const className = event.target.className.baseVal
+          if (className !== 'svg-screenshot') return
+          $cover.hide()
+          $img.trigger('click')
+        })
+
         $body.append($cover);
         self.renderSVGScreenShot($cover, imageId, appImg);
       }else {
         self.updateSVGScreenShotSize($cover, $img);
       }
+    }
+
+    // 画像mouseenter時
+    $body.on('mouseenter', 'img', e => {
+      showLinkLayer(e)
     });
 
     // 画像mouseleave時
