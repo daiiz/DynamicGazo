@@ -44,15 +44,6 @@
     });
   };
 
-  const setBadgeCaptureGyazoCompleted = () => {
-    chrome.browserAction.setBadgeBackgroundColor({
-      'color': '#4abb0c'
-    });
-    chrome.browserAction.setBadgeText({
-      'text': 'G'
-    });
-  }
-
   var getSettings = () => {
     var s = null;
     if (localStorage.svgscreenshot_settings) {
@@ -66,7 +57,7 @@
     var s = getSettings();
     if (s === null || s.use_scrapbox === 'no') return;
 
-    var xUrl = SVGSCREENSHOT_APP + `/c/x/${xKey}.png`;
+    const xUrl = SVGSCREENSHOT_APP + `/c/x/${xKey}.png`;
     // Scrapbox id
     var scrapboxId = SCRAP_BOX_ID || s.id_scrapbox[0];
     var title = encodeURIComponent(SITE_TITLE.trim());
@@ -82,14 +73,16 @@
     SITE_TITLE = svgtag.getAttribute('data-title') || '';
     SITE_URL = svgtag.getAttribute('data-url') || '';
 
-    // post to gyazo.com
-    const gyazoImageId = await window.dynamicGazo.uploadToGyazo({
-      title: SITE_TITLE,
-      referer: SITE_URL,
-      image: svgBgBase64Img,
-      scale: devicePixelRatio,
-    })
-    await setBadgeCaptureGyazoCompleted()
+    const uploadToGyazo = async (dynamicGazoUrl) => {
+      // post to gyazo.com
+      const gyazoImageId = await window.dynamicGazo.uploadToGyazo({
+        title: SITE_TITLE,
+        referer: SITE_URL,
+        image: svgBgBase64Img,
+        scale: devicePixelRatio,
+        dynamicGazoUrl
+      })
+    }
 
     // post to svgscreenshot.appspot.com
     $.ajax({
@@ -104,19 +97,19 @@
         title: SITE_TITLE,
         viewbox: svgtag.getAttribute('viewBox'),
         public: 'yes',
-        gyazo: 'yes',
-        gyazo_image_id: gyazoImageId,
+        // gyazo: 'yes',
+        // gyazo_image_id: gyazoImageId,
         dpr: devicePixelRatio,
         app_name: APP_NAME
       })
-    }).success (data => {
+    }).success(data => {
       var stat = data.status;
       if (stat === 'ok-saved-new-screenshot') {
         var itemUrl = SVGSCREENSHOT_APP + data.url;
         showBrowserPopup(itemUrl, svgBgBase64Img, false);
-        if (MODE === 'scrap') {
-          makeScrapboxPage(data.x_key);
-        }
+
+        if (MODE === 'scrap') makeScrapboxPage(data.x_key);
+        uploadToGyazo(itemUrl)
       }else if (stat === 'exceed-screenshots-upper-limit') {
         showBrowserPopup('', '', true, "ファイルの上限数に達しています");
       }else if (stat == 'no-login') {
