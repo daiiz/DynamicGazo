@@ -4,19 +4,20 @@
  */
 class InlineViewer {
   constructor () {
-    this.appUrl = 'https://svgscreenshot.appspot.com';
-    this.gyazo = 'https://gyazo.com';
+    this.appUrl = (window.dynamicGazo.env === 'production') ?
+      'https://svgscreenshot.appspot.com' : 'http://localhost:8080'
+    this.gyazo = 'https://gyazo.com'
     this.gyazoImageUrlPatterns = [
       '//gyazo.com/(.+)/raw',
       '//i.gyazo.com/(.+)'
-    ];
+    ]
     this.svgScreenShotUrlPatterns = [
       `${this.appUrl}/c/x/(.+)`
-    ];
+    ]
     /* 直近で検出した画像のID */
-    this.latestImageId = null;
-    this.hideAllSVGScreenShots();
-    this.bindEvents();
+    this.latestImageId = null
+    this.hideAllSVGScreenShots()
+    this.bindEvents()
   }
 
   detectImageId (src, urlPatterns) {
