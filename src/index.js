@@ -14,7 +14,7 @@ dynamicGazo.uploadToGyazo = async ({scale, image, referer, title, dynamicGazoUrl
   formdata.append('title', title)
   formdata.append('referer_url', referer)
   formdata.append('scale', scale)
-  formdata.append('desc', `\n#DynamicGazo\n${dynamicGazoUrl}`)
+  formdata.append('desc', `\n${dynamicGazoUrl}\n#DynamicGazo`)
 
   const response = await window.fetch(apiEndpoint, {
     method: 'POST',
