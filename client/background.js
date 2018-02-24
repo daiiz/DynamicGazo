@@ -1,6 +1,6 @@
 (function () {
   var SVGSCREENSHOT_APP = (window.dynamicGazo.env === 'production') ?
-    'https://svgscreenshot.appspot.com': 'http://localhost:8080'
+    'https://svgscreenshot.appspot.com' : 'http://localhost:8080'
   var SVGSCREENSHOT_DEV = ''
 
   /**
@@ -85,7 +85,7 @@
       })
     }
 
-    // post to svgscreenshot.appspot.com
+    // post to webapp
     $.ajax({
       url: `${SVGSCREENSHOT_APP}/api/uploadsvg`,
       type: 'POST',
