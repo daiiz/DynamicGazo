@@ -1,1 +1,0 @@
-var clearBadge=()=>{chrome.browserAction.setBadgeText({'text':''})};var validateUrl=(url='')=>{var prot=url.split(':')[0].toLowerCase();if(prot&&(prot==='http'||prot==='https')){}else{return''}url=url.replace(/</g,'').replace(/>/g,'');return url};var validateTitle=(title='')=>{title=title.replace(/</g,'').replace(/>/g,'');return title};
