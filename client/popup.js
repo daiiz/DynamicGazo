@@ -1,4 +1,26 @@
 (function () {
+  const replaceToDevUrls = () => {
+    if (window.dynamicGazo.env === 'production') return
+    const targets = [
+      '#open',
+      '#y-collection',
+      '#login',
+      '#collection'
+    ]
+    for (const target of targets) {
+      const url = document.querySelector(target).href
+      console.log(url)
+      document.querySelector(target).href = url.replace(
+        /^https\:\/\/svgscreenshot\.appspot\.com/, 'http://localhost:8080')
+    }
+  }
+
+  const itemUrl = (url) => {
+    if (!url) return ''
+    if (window.dynamicGazo.env === 'production') return url
+    return url.replace(/^https\:\/\/svgscreenshot\.appspot\.com/, 'http://localhost:8080')
+  }
+
   var openN = () => {
     document.querySelector('#n').style.display = 'block';
     document.querySelector('#y').style.display = 'none';
@@ -10,10 +32,10 @@
   };
 
   window.addEventListener('load', function () {
-    document.querySelector('#open').href = localStorage.item_url || '';
+    document.querySelector('#open').href = itemUrl(localStorage.item_url)
     var thumbnail = document.querySelector('#img');
     thumbnail.src = localStorage.item_img || '';
-    thumbnail.dataset.clipboardText = localStorage.item_img_url || '';
+    thumbnail.dataset.clipboardText = itemUrl(localStorage.item_img_url)
     var err = localStorage.is_error || 'ようこそ';
     if (err !== 'y') {
       // キャプチャ失敗
@@ -23,7 +45,7 @@
       new Clipboard('.copy-btn');
       openY();
     }
-
+    replaceToDevUrls()
   }, false);
 
   document.querySelector('#open').addEventListener('click', function () {
