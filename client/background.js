@@ -45,13 +45,13 @@
     });
   };
 
-  var getSettings = () => {
-    var s = null;
+  const getSettings = () => {
+    let s = null
     if (localStorage.svgscreenshot_settings) {
-      s = JSON.parse(localStorage.svgscreenshot_settings);
+      s = JSON.parse(localStorage.svgscreenshot_settings)
     }
     return s
-  };
+  }
 
   var makeScrapboxPage = (xKey='') => {
     if (xKey.length === 0) return;
@@ -71,8 +71,9 @@
 
   // スクリーンショットをアップロードする
   const uploadToDynamicGazo = async (svgtag, svgBgBase64Img, devicePixelRatio) => {
-    SITE_TITLE = svgtag.getAttribute('data-title') || '';
-    SITE_URL = svgtag.getAttribute('data-url') || '';
+    SITE_TITLE = svgtag.getAttribute('data-title') || ''
+    SITE_URL = svgtag.getAttribute('data-url') || ''
+    const s = getSettings()
 
     const uploadToGyazo = async (dynamicGazoUrl) => {
       // post to gyazo.com
@@ -110,7 +111,9 @@
         showBrowserPopup(itemUrl, svgBgBase64Img, false)
 
         if (MODE === 'scrap') makeScrapboxPage(data.x_key)
-        if (window.dynamicGazo.env === 'production') uploadToGyazo(itemUrl)
+        if (window.dynamicGazo.env === 'production' && s.use_gyazo !== 'no') {
+          uploadToGyazo(itemUrl)
+        }
       }else if (stat === 'exceed-screenshots-upper-limit') {
         showBrowserPopup('', '', true, "ファイルの上限数に達しています");
       }else if (stat == 'no-login') {
