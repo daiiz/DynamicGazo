@@ -1,6 +1,8 @@
 const AnchorsInArea = require('anchors-in-area')
 
-window.dynamicGazo = {}
+window.dynamicGazo = {
+  env: process.env.NODE_ENV
+}
 
 dynamicGazo.AnchorsInArea = AnchorsInArea
 

@@ -381,7 +381,7 @@ class ScreenShot {
             }else if (re === 'make-card-scrapbox') {
                 // リンクカードを作成
                 // ポップアップ画面から呼ばれる
-                var themeImg = chrome.extension.getURL('.image/linkcard/scrapbox_default.png');
+                var themeImg = chrome.extension.getURL('./image/linkcard/scrapbox_default.png');
                 var closeBtn = chrome.extension.getURL('./image/x.png');
                 var $cardArea = $(`<div class="card-area"><img class="card-close" src="${closeBtn}"></div>`);
                 var $img = $(`<img src="${themeImg}" class="card-img">`);

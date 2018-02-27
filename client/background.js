@@ -1,6 +1,7 @@
 (function () {
-  var SVGSCREENSHOT_APP = 'https://svgscreenshot.appspot.com';
-  var SVGSCREENSHOT_DEV = '';
+  var SVGSCREENSHOT_APP = (window.dynamicGazo.env === 'production') ?
+    'https://svgscreenshot.appspot.com' : 'http://localhost:8080'
+  var SVGSCREENSHOT_DEV = ''
 
   /**
    * MODE
@@ -84,7 +85,7 @@
       })
     }
 
-    // post to svgscreenshot.appspot.com
+    // post to webapp
     $.ajax({
       url: `${SVGSCREENSHOT_APP}/api/uploadsvg`,
       type: 'POST',
@@ -105,11 +106,11 @@
     }).success(data => {
       var stat = data.status;
       if (stat === 'ok-saved-new-screenshot') {
-        var itemUrl = SVGSCREENSHOT_APP + data.url;
-        showBrowserPopup(itemUrl, svgBgBase64Img, false);
+        const itemUrl = SVGSCREENSHOT_APP + data.url
+        showBrowserPopup(itemUrl, svgBgBase64Img, false)
 
-        if (MODE === 'scrap') makeScrapboxPage(data.x_key);
-        uploadToGyazo(itemUrl)
+        if (MODE === 'scrap') makeScrapboxPage(data.x_key)
+        if (window.dynamicGazo.env === 'production') uploadToGyazo(itemUrl)
       }else if (stat === 'exceed-screenshots-upper-limit') {
         showBrowserPopup('', '', true, "ファイルの上限数に達しています");
       }else if (stat == 'no-login') {
