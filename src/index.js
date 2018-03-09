@@ -31,7 +31,9 @@ dynamicGazo.uploadToGyazo = async ({scale, image, referer, title, dynamicGazoUrl
   })
   const gyazoImageId = data.url.split('gyazo.com/')[1]
 
-  chrome.browserAction.setBadgeBackgroundColor({ color: '#4abb0c' })
-  chrome.browserAction.setBadgeText({ text: 'G' })
+  chrome.tabs.create({
+    url: data.url,
+    active: false
+  }, null)
   return gyazoImageId
 }

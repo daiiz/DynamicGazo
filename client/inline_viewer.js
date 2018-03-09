@@ -7,10 +7,6 @@ class InlineViewer {
     this.appUrl = (window.dynamicGazo.env === 'production') ?
       'https://svgscreenshot.appspot.com' : 'http://localhost:8080'
     this.gyazo = 'https://gyazo.com'
-    this.gyazoImageUrlPatterns = [
-      '//gyazo.com/(.+)/raw',
-      '//i.gyazo.com/(.+)'
-    ]
     this.svgScreenShotUrlPatterns = [
       `${this.appUrl}/c/x/(.+)`
     ]
@@ -36,9 +32,8 @@ class InlineViewer {
     return imgId;
   }
 
-  /* cid: Gyazo Image ID */
   $getCover (cid='', $img) {
-    // cid is cover-id!
+    // cid is cover-id
     var coverId = 'daiz-ss-iv-cover-c-' + cid;
     var pageX = window.pageXOffset;
     var pageY = window.pageYOffset;
@@ -81,12 +76,12 @@ class InlineViewer {
   }
 
   // SVGコンテンツを表示する
-  renderSVGScreenShot ($cover, cid='', appImg='d/g') {
-    var cover = $cover[0];
-    var coverWidth = $cover.width();
-    var coverHeight = $cover.height();
-    var $svgArea = $cover.find('.daiz-ss-iv-svg');
-    var svgUrl = `${this.appUrl}/${appImg}/${cid}`;
+  renderSVGScreenShot ($cover, cid='') {
+    var cover = $cover[0]
+    var coverWidth = $cover.width()
+    var coverHeight = $cover.height()
+    var $svgArea = $cover.find('.daiz-ss-iv-svg')
+    var svgUrl = `${this.appUrl}/d/s/${cid}`
 
     $.ajax({
       url: svgUrl,
@@ -154,26 +149,21 @@ class InlineViewer {
     var self = this;
     var $body = $('body');
 
-    const showLinkLayer = (e) => {
-      const $img = $(e.target).closest('img');
+    const showLinkLayer = e => {
+      const $img = $(e.target).closest('img')
 
       // 対象画像であるかを確認
-      var src = decodeURIComponent($img[0].src);
-      var imageId = self.detectImageId(src, self.gyazoImageUrlPatterns);
-      var appImg = 'd/g';
-      if (imageId === null) {
-        imageId = self.detectImageId(src, self.svgScreenShotUrlPatterns);
-        appImg = 'd/s';
-      }
+      const src = decodeURIComponent($img[0].src)
+      const imageId = self.detectImageId(src, self.svgScreenShotUrlPatterns)
 
-      if (imageId === null) return;
+      if (imageId === null) return
       if (imageId !== this.latestImageId) {
-        this.latestImageId = imageId;
+        this.latestImageId = imageId
       }
 
-      self.hideAllSVGScreenShots();
-      var coverInfo = self.$getCover(imageId, $img);
-      var $cover = coverInfo[0];
+      self.hideAllSVGScreenShots()
+      var coverInfo = self.$getCover(imageId, $img)
+      var $cover = coverInfo[0]
       if (coverInfo[1]) {
         // 新規作成されたカバー
         $cover.on('click', event => {
@@ -183,10 +173,10 @@ class InlineViewer {
           $img.trigger('click')
         })
 
-        $body.append($cover);
-        self.renderSVGScreenShot($cover, imageId, appImg);
+        $body.append($cover)
+        self.renderSVGScreenShot($cover, imageId)
       }else {
-        self.updateSVGScreenShotSize($cover, $img);
+        self.updateSVGScreenShotSize($cover, $img)
       }
     }
 
