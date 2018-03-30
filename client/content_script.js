@@ -1,5 +1,7 @@
 const APP_PREFIX = 'dynamic_gazo';
 const dynamicGazo = window.dynamicGazo
+const ESC = 27
+let flagMousedown = false
 
 const sendChromeMsg = (json, callback) => {
     chrome.runtime.sendMessage(json, callback);
@@ -23,23 +25,7 @@ class ScreenShot {
 
     renderCropper (boxParams = []) {
         var self = this;
-        chrome.runtime.sendMessage({
-            command: 'get-scrapbox-list'
-        }, (info) => {
-            var scrapboxEnabled = info.scrapbox_enabled;
-            var scrapboxIds = info.scrapbox_ids;
-            if (scrapboxEnabled === 'yes' && scrapboxIds.length > 0) {
-                var $select = $(`<select id="daiz-ss-cropper-scrap-select"></select>`);
-                for (var i = 0; i < scrapboxIds.length; i++) {
-                    var scrapboxId = scrapboxIds[i];
-                    var $opt = $(`<option value="${scrapboxId}">${scrapboxId}</option>`);
-                    $select.append($opt);
-                }
-                self.initCropperMain(boxParams, $select);
-            }else {
-                self.initCropperMain(boxParams, null);
-            }
-        });
+        self.initCropperMain(boxParams, null)
     }
 
     uiInit () {
@@ -77,73 +63,105 @@ class ScreenShot {
         }
     }
 
+    $showWrapper () {
+        const $body = $('body')
+        const $wrapper = $(`<div id='daiiz-wrapper'></div>`)
+        $wrapper.css({
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            cursor: 'crosshair',
+            zIndex: 2147483646
+        })
+        $body.append($wrapper)
+        return $wrapper
+    }
+
     // 範囲指定のための長方形を表示する
-    initCropperMain (boxParams=[], $scrapboxSelectBox=null) {
-        var $cropper = this.$genCropper();
-        var closeBtnImg = chrome.extension.getURL('./image/x.png');
-        var $closeBtn = $(`<div id="${APP_PREFIX}-daiz-ss-cropper-close" class="daiz-ss-cropper-close"></div>`);
-        var $captureBtn = $(`<div id="${APP_PREFIX}-daiz-ss-cropper-capture"
-            class="daiz-ss-cropper-capture">Capture</div>`);
-        var $scrapboxBtn = $('<div id="daiz-ss-cropper-scrapbox">Scrap</div>');
-        $closeBtn.css({
-            'background-image': `url(${closeBtnImg})`
-        });
-
-        $cropper[0].className = 'daiz-ss-cropper-main';
-        $cropper[0].id = `${APP_PREFIX}-daiz-ss-cropper-main`;
-        // 切り抜きボックスの位置を初期化
-        if (boxParams.length === 0) {
-            $cropper.css({
-                left  : this.positionLastRclick[0] - (this.CROP_BOX_SIZE / 2),
-                top   : this.positionLastRclick[1] - (this.CROP_BOX_SIZE / 2),
-                width : this.CROP_BOX_SIZE,
-                height: this.CROP_BOX_SIZE
-            });
-        }else {
-            $cropper.css({
-                left  : boxParams[0],
-                top   : boxParams[1],
-                width : boxParams[2],
-                height: boxParams[3]
-            });
+    initCropperMain () {
+        const self = this
+        const $cropper = this.$genCropper()
+        const $wrapper = this.$showWrapper()
+        const startPosition = {
+            left: 0,
+            top: 0
         }
-        $cropper.append($captureBtn);
-        if ($scrapboxSelectBox !== null) {
-            $cropper.append($scrapboxBtn);
-            $cropper.append($scrapboxSelectBox);
-        }
-        $cropper.append($closeBtn);
-        this.movable($cropper)
-        $('body').append($cropper);
 
-        // XXX: 以下を有効化しないとダメ
-        this._setRects();
-    }
+        $cropper[0].className = 'daiz-ss-cropper-main'
+        $cropper[0].id = `${APP_PREFIX}-daiz-ss-cropper-main`
 
-    movable ($cropper) {
-        // ドラッグ可能にする
-        $cropper.draggable({
-            stop: (ev, ui) => {
-                this._setRects();
+        $wrapper.on('mousedown', event => {
+            startPosition.left = event.pageX
+            startPosition.top = event.pageY
+            $cropper.css({
+                left  : startPosition.left - window.scrollX,
+                top   : startPosition.top - window.scrollY,
+                width : 0,
+                height: 0
+            })
+            flagMousedown = true
+            self.fixHtml(true)
+            $('body').append($cropper)
+        })
+
+        this.setMousemoveHandler($wrapper, $cropper, startPosition)
+        this.setMousemoveHandler($cropper, $cropper, startPosition)
+
+        $wrapper.on('mouseup', event => {
+            $cropper.css({
+                width : event.pageX - startPosition.left,
+                height: event.pageY - startPosition.top,
+            })
+            flagMousedown = false
+            $wrapper.remove()
+            self._setRects(false)
+        })
+
+        $(window).on('keyup', event => {
+            const keyCode = event.keyCode
+            if (keyCode === ESC) {
+                flagMousedown = false
+                self.clean()
             }
-        });
-
-        // リサイズ可能にする
-        $cropper.resizable({
-            stop: (ev, ui) => {
-                this._setRects();
-            },
-            handles: "all"
-        });
+        })
     }
 
-    _setRects () {
-        var $cropper = $(`#${APP_PREFIX}-daiz-ss-cropper-main`);
-        const range= $cropper[0].getBoundingClientRect();
+    setMousemoveHandler ($elem, $cropper, startPosition) {
+        const self = this
+        $elem.on('mousemove', event => {
+            if (!flagMousedown) return
+            $cropper.css({
+                width : event.pageX - startPosition.left,
+                height: event.pageY - startPosition.top,
+            })
+            self._setRects(true)
+        })
+    }
+
+    _setRects (simulate=false, _range=undefined) {
+        var $cropper = $(`#${APP_PREFIX}-daiz-ss-cropper-main`)
+        const range = _range || $cropper[0].getBoundingClientRect()
         if (range === undefined) return;
-        this.removeCropper();
-        // range: scroll量を加味しないpx値
-        this.linkdata = this.setRects(range);
+        this.removeCropper()
+
+        if (simulate) {
+            this.linkdata = this.setRects(range, simulate)
+        } else {
+            this.clean()
+            // ページから不要なdivが消去されてからスクリーンショットを撮りたいので，
+            // 1秒待ってから送信する
+            window.setTimeout(() => {
+                if (this.existCropUI()) {
+                    console.log('rep')
+                    this._setRects(false, range)
+                    return
+                }
+                this.linkdata = this.setRects(range, simulate)
+                this.capture()
+            }, 1)
+        }
     }
 
     // ページ上で選択されている文字列を取得
@@ -154,15 +172,27 @@ class ScreenShot {
         return text;
     }
 
-    setRects (range) {
-        this.fixHtml(true)
-        const $cropperMain = $(this.removeCropperMain())
+    setRects (range, simulate=false) {
+        // this.fixHtml(true)
+        let $cropperMain = null
+        if (!simulate) {
+            $cropperMain = $(this.removeCropperMain())
+        }
+
         const anchorsInArea = new dynamicGazo.AnchorsInArea(document)
         anchorsInArea.options.detail = true
+        anchorsInArea.options.onlyInTopLayer = !simulate
         const aTags = anchorsInArea.find(range)
 
-        this.movable($cropperMain)
-        $('body').append($cropperMain)
+        let imgTags = []
+        if (!simulate) {
+            // XXX: 要素が増えたら、共通化
+            imgTags = this.correctPositions(anchorsInArea.find(range, 'img'), range)
+            for (const imgTag of imgTags) {
+                imgTag.css = {}
+                imgTag.css['border-radius'] = jQuery(imgTag.ref).css('border-radius') || '0px'
+            }
+        }
 
         // リンク以外のテキスト:
         var text = this.getSelectedText();
@@ -192,7 +222,7 @@ class ScreenShot {
 
                 $cropper.attr('title', aTag.url);
                 $cropper.attr('id', aid);
-                $('body').append($cropper);
+                if (simulate) $('body').append($cropper);
                 aTagRects.push(pos);
             }
         }
@@ -222,6 +252,9 @@ class ScreenShot {
         var res = {
             cropperRect : pos_cropper,
             aTagRects   : aTagRects,
+            elementRects: {
+                img: imgTags
+            },
             text        : text,
             winW        : window.innerWidth,
             winH        : window.innerHeight,
@@ -236,18 +269,27 @@ class ScreenShot {
     // aTagRect ⊂ stageRect は保証されている
     correctPosition (aTagRect, stageRect) {
         // XXX: scrollの扱いを詰める必要あり
-        let res = {};
-        const x1 = aTagRect.left - stageRect.left;
+        let res = {}
+        const x1 = aTagRect.left - stageRect.left
         // var x2 = (aTagRect.left + aTagRect.width) - stageRect.left;
-        const y1 = aTagRect.top - stageRect.top;
+        const y1 = aTagRect.top - stageRect.top
         // var y2 = (aTagRect.top + aTagRect.height) - stageRect.top;
         res = {
             x     : x1,
             y     : y1,
             width : aTagRect.width,
             height: aTagRect.height
-        };
-        return res;
+        }
+        return res
+    }
+
+    correctPositions (rects, stageRect) {
+        for (const rect of rects) {
+            const {x, y} = this.correctPosition(rect.position, stageRect)
+            rect.x = x
+            rect.y = y
+        }
+        return rects
     }
 
     // 描画されている長方形カバーを全て消去
@@ -261,87 +303,55 @@ class ScreenShot {
 
     removeCropperMain () {
         const $elem = $(".daiz-ss-cropper-main")
-        $elem.draggable('destroy')
-        $elem.resizable('destroy')
+        if ($elem.length === 0) return null
         const copy = $elem[0].cloneNode(true)
         $elem.remove();
         return copy
     }
 
-    capture (mode='capture', scrapboxBoxId='') {
-        var self = this;
-        var res = [];
-        window.getSelection().removeAllRanges();
+    capture (mode='capture') {
+        var self = this
+        var res = []
+        window.getSelection().removeAllRanges()
 
-        // 切り取りボックス内のa要素
-        if (self.linkdata.aTagRects) {
-            for (var j = 0; j < self.linkdata.aTagRects.length; j++) {
-                var aTagDatum = self.linkdata.aTagRects[j];
-                var aid = aTagDatum.id;
-                if ($(`#${aid}`).length > 0) {
-                    res.push(aTagDatum);
+        // MacBook ProのRetinaディスプレイなどの高解像度な
+        // ディスプレイを使用している場合は1より大きな値となる
+        var rat = Math.max(window.devicePixelRatio, 1.0);
+        if (self.linkdata !== null) {
+            var appName = self.app;
+            self.app = null;
+            sendChromeMsg({
+                command: 'make-screen-shot',
+                options: {
+                    sitedata: self.linkdata,
+                    mode: mode,
+                    scrapbox_box_id: null,
+                    app: appName,
+                    dpr: rat
                 }
-            }
+            });
         }
-        self.linkdata.aTagRects = res;
+    }
 
-        self.removeCropperMain();
-        self.removeCropper();
-        self.fixHtml(false);
+    clean () {
+        if (!this.existCropUI()) return
+        console.log('clean')
+        this.removeCropperMain();
+        this.removeCropper();
+        $('#daiiz-wrapper').remove()
+        this.fixHtml(false);
+    }
 
-        // ページから不要なdivが消去されてからスクリーンショットを撮りたいので，
-        // 1秒待ってから送信する
-        window.setTimeout(() => {
-            // MacBook ProのRetinaディスプレイなどの高解像度な
-            // ディスプレイを使用している場合は1より大きな値となる
-            var rat = Math.max(window.devicePixelRatio, 1.0);
-            if (scrapboxBoxId.length === 0) mode = 'capture';
-            if (self.linkdata !== null) {
-                var appName = self.app;
-                self.app = null;
-                sendChromeMsg({
-                    command: 'make-screen-shot',
-                    options: {
-                        sitedata: self.linkdata,
-                        mode: mode,
-                        scrapbox_box_id: scrapboxBoxId,
-                        app: appName,
-                        dpr: rat
-                    }
-                });
-
-            }
-        }, 900);
+    existCropUI () {
+        const wrapperExist = $('#daiiz-wrapper').length > 0
+        const cropperMainExist = $('.daiz-ss-cropper-main').length > 0
+        const cropperExist = $('.daiz-ss-cropper').length > 0
+        return wrapperExist || cropperMainExist || cropperExist
     }
 
     bindEvents () {
         var self = this;
         var $body = $('body');
-
-        // cropperがクリックされたとき
-        // 自身を消去する
-        $body.on('click', '.daiz-ss-cropper', ev => {
-            $(ev.target).closest('.daiz-ss-cropper').remove();
-        });
-
-        // 撮影ボタンがクリックされたとき
-        $body.on('click', `#${APP_PREFIX}-daiz-ss-cropper-capture`, () => {
-            this.capture('capture');
-        });
-
-        // 撮影してScrapboxのページを作成するボタンが
-        // クリックされたとき
-        $body.on('click', '#daiz-ss-cropper-scrapbox', ev => {
-            var scrapboxBoxId = $('#daiz-ss-cropper-scrap-select').val() || '';
-            this.capture('scrap', scrapboxBoxId);
-        });
-
-        // 切り抜きボックスの閉じるボタンがクリックされたとき
-        $body.on('click', `#${APP_PREFIX}-daiz-ss-cropper-close`, ev => {
-            this.removeCropper();
-            this.removeCropperMain();
-            this.fixHtml(false);
-        });
 
         // 画像上での右クリックを追跡
         $body.on('contextmenu', 'img', ev => {
@@ -363,43 +373,20 @@ class ScreenShot {
         // コンテキストメニュー（右クリックメニュー）が押された通知をbackgroundページから受け取る
         chrome.extension.onRequest.addListener((request, sender, sendResponse) => {
             var re = request.event;
-            if (re === 'click-context-menu') {
+            if (re === 'capture-whole-page') {
                 // 撮影領域を選択するやつを表示
-                if (request.elementType === 'image' || this.tmp.$contextMenuImg.length > 0) {
-                    var $img = this.tmp.$contextMenuImg;
-                    var imgRect = $img[0].getBoundingClientRect();
-                    this.tmp.$contextMenuImg = [];
-                    this.renderCropper([
-                        imgRect.left,
-                        imgRect.top,
-                        $img.width(),
-                        $img.height()
-                    ]);
-                }else {
-                    this.renderCropper();
+                const range = {
+                    left: 0,
+                    right: window.innerWidth,
+                    top: 0,
+                    bottom: window.innerHeight,
+                    width: window.innerWidth,
+                    height: window.innerHeight
                 }
-            }else if (re === 'make-card-scrapbox') {
-                // リンクカードを作成
-                // ポップアップ画面から呼ばれる
-                var themeImg = chrome.extension.getURL('./image/linkcard/scrapbox_default.png');
-                var closeBtn = chrome.extension.getURL('./image/x.png');
-                var $cardArea = $(`<div class="card-area"><img class="card-close" src="${closeBtn}"></div>`);
-                var $img = $(`<img src="${themeImg}" class="card-img">`);
-                var $title = $(`<div class="card-a"><a href="${window.location.href}">${document.title}</a></div>`);
-                var $thumbnail = $(`<div class="card-thumbnail"></div>`);
-                var ogImg = $('meta[property="og:image"]').attr('content');
-                if (ogImg) {
-                    $thumbnail.css({
-                        'background-color': '#fff',
-                        'background-image': `url("${ogImg}")`
-                    });
-                }else {
-                    $thumbnail.css('background-color', 'rgba(0, 0, 0, 0)');
-                }
-                $cardArea.append($img);
-                $cardArea.append($title);
-                $cardArea.append($thumbnail);
-                $body.append($cardArea);
+                this.linkdata = this.setRects(range, false)
+                this.capture()
+            } else if (re === 'capture-range') {
+                this.renderCropper()
             }
         });
 
@@ -421,4 +408,4 @@ chrome.extension.onRequest.addListener((request, sender, sendResponse) => {
             ss.inlineViewer = new InlineViewer();
         }
     }
-});
+})

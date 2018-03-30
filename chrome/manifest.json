@@ -15,8 +15,7 @@
             "19": "image/icon-l.png",
             "38": "image/icon-l.png"
         },
-        "default_title": "DynamicGazo",
-        "default_popup": "popup.html"
+        "default_title": "DynamicGazo"
     },
     "manifest_version": 2,
     "name": "DynamicGazo",
@@ -50,5 +49,5 @@
         "cookies",
         "<all_urls>"
     ],
-    "version": "0.2.5"
+    "version": "0.2.6"
 }
