@@ -110,22 +110,23 @@ class ScreenShot {
         this.setMousemoveHandler($cropper, $cropper, startPosition)
 
         $wrapper.on('mouseup', event => {
-            $cropper.css({
-                width : event.pageX - startPosition.left,
-                height: event.pageY - startPosition.top,
-            })
+            const width = event.pageX - startPosition.left
+            const height = event.pageY - startPosition.top
+            if (width < 20 || height < 20) return
+            $cropper.css({ width, height })
             flagMousedown = false
             $wrapper.remove()
             self._setRects(false)
         })
 
         $(window).on('keyup', event => {
-            const keyCode = event.keyCode
-            if (keyCode === ESC) {
-                flagMousedown = false
-                self.clean()
-            }
+            if (event.keyCode === ESC) self.clearCropper()
         })
+    }
+
+    clearCropper () {
+        flagMousedown = false
+        this.clean()
     }
 
     setMousemoveHandler ($elem, $cropper, startPosition) {
@@ -387,6 +388,8 @@ class ScreenShot {
                 this.capture()
             } else if (re === 'capture-range') {
                 this.renderCropper()
+            } else if (re === 'cancel-capture-range') {
+                this.clean()
             }
         });
 

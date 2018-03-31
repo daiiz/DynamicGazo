@@ -28,6 +28,8 @@
       devicePixelRatio
     })
     if (res.status === 200 && res.data.x_key) {
+      localStorage.item_url = `${window.dynamicGazo.appOrigin}/x/${res.data.x_key}`
+      localStorage.item_img = `${window.dynamicGazo.appOrigin}/o/${res.data.x_key}.svg`
       setBadgeUploadingToGyazo()
       await uploadToGyazo({ svgScreenshotImageId: res.data.x_key })
     }
@@ -280,11 +282,5 @@
         event: 'updated-location-href'
       });
     }
-  });
-
-  chrome.browserAction.onClicked.addListener(tab => {
-    chrome.tabs.sendRequest(tab.id, {
-      event: 'capture-range'
-    })
   })
 })();
