@@ -19,7 +19,6 @@
   const uploadToGyazoSVG = async ({ devicePixelRatio }) => {
     const {baseUri, title, base64Img} = META
     const svg = createSVGTag()
-    console.log(svg)
     const res = await dynamicGazo.uploadToDynamicGazo({
       svg,
       title,
@@ -28,13 +27,51 @@
       devicePixelRatio
     })
     if (res.status === 200 && res.data.x_key) {
-      localStorage.item_url = `${window.dynamicGazo.appOrigin}/x/${res.data.x_key}`
-      localStorage.item_img = `${window.dynamicGazo.appOrigin}/o/${res.data.x_key}.svg`
+      updateLocalStorage({
+        item_url: `${window.dynamicGazo.appOrigin}/x/${res.data.x_key}`,
+        item_img: `${window.dynamicGazo.appOrigin}/o/${res.data.x_key}.svg`,
+        message: 'y'
+      })
       setBadgeUploadingToGyazo()
       await uploadToGyazo({ svgScreenshotImageId: res.data.x_key })
+      clearBadge()
+    } else {
+      // XXX: 適切なstatus codeが返ってきていない！
+      handleError(res.data)
     }
-    clearBadge()
     return res
+  }
+
+
+  const updateLocalStorage = ({item_url, item_img, message} = {item_url: '', item_img: ''}) => {
+    localStorage.item_url = item_url
+    localStorage.item_img = item_img
+    localStorage.is_error = message
+  }
+
+  const handleError = ({ status }) => {
+    chrome.browserAction.setBadgeBackgroundColor({ color: 'red' })
+    chrome.browserAction.setBadgeText({ text: '😇' })
+    switch (status) {
+      case 'exceed-screenshots-upper-limit': {
+        updateLocalStorage({
+          message: 'ファイルの上限数に達しています。'
+        })
+        break
+      }
+      case 'no-login': {
+        updateLocalStorage({
+          message: 'ウェブアプリにログインしていません。'
+        })
+        break
+      }
+      default: {
+        updateLocalStorage({
+          message: 'アップロードに失敗しました。'
+        })
+        break
+      }
+    }
   }
 
   // Canvasに画像をセットして，必要部分のみ切り出す
