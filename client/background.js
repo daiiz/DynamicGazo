@@ -29,7 +29,7 @@
     if (res.status === 200 && res.data.x_key) {
       updateLocalStorage({
         item_url: `${window.dynamicGazo.appOrigin}/x/${res.data.x_key}`,
-        item_img: `${window.dynamicGazo.appOrigin}/o/${res.data.x_key}.svg`,
+        item_img: `${window.dynamicGazo.appOrigin}/c/x/${res.data.x_key}.png`,
         message: 'y'
       })
       setBadgeUploadingToGyazo()
