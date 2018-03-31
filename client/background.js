@@ -1,15 +1,5 @@
 (function () {
   let META = {}
-  const setBadgeCaptureCompleted = () => {
-    chrome.browserAction.setBadgeBackgroundColor({ color: '#4abb0c' })
-    chrome.browserAction.setBadgeText({ text: '○' })
-  }
-
-  const setBadgeUploadGyazoCompleted = () => {
-    chrome.browserAction.setBadgeBackgroundColor({ color: '#4abb0c' })
-    chrome.browserAction.setBadgeText({ text: 'G' })
-  }
-
   const getSettings = () => {
     if (!localStorage.svgscreenshot_settings) return null
     return JSON.parse(localStorage.svgscreenshot_settings)
@@ -38,11 +28,9 @@
       devicePixelRatio
     })
     if (res.status === 200 && res.data.x_key) {
-      await uploadToGyazo({
-        svgScreenshotImageId: res.data.x_key
-      })
+      setBadgeUploadingToGyazo()
+      await uploadToGyazo({ svgScreenshotImageId: res.data.x_key })
     }
-    console.log("#", res)
     clearBadge()
     return res
   }
