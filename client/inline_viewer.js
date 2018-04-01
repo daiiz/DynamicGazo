@@ -8,7 +8,8 @@ class InlineViewer {
       'https://svgscreenshot.appspot.com' : 'http://localhost:8080'
     this.gyazo = 'https://gyazo.com'
     this.svgScreenShotUrlPatterns = [
-      `${this.appUrl}/c/x/(.+)`
+      `${this.appUrl}/c/x/(.+)`,
+      `${this.appUrl}/thumb/(.+)`
     ]
     /* 直近で検出した画像のID */
     this.latestImageId = null
@@ -23,7 +24,7 @@ class InlineViewer {
       let reg = new RegExp(pattern);
       let matched = src.match(reg);
       if (matched && matched.length >= 2) {
-        imgId = matched[1].split('.')[0];
+        imgId = matched[1].split('#')[0].split('.')[0]
         break;
       }
     }
