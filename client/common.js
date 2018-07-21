@@ -1,9 +1,17 @@
 // BrowserActionのBadgeをクリア
-var clearBadge = () => {
-  chrome.browserAction.setBadgeText({
-    'text': ''
-  });
-};
+const clearBadge = () => {
+  chrome.browserAction.setBadgeText({ 'text': '' })
+}
+
+const setBadgeCaptureCompleted = () => {
+  chrome.browserAction.setBadgeBackgroundColor({ color: '#4abb0c' })
+  chrome.browserAction.setBadgeText({ text: '○' })
+}
+
+const setBadgeUploadingToGyazo = () => {
+  chrome.browserAction.setBadgeBackgroundColor({ color: '#4abb0c' })
+  chrome.browserAction.setBadgeText({ text: 'G' })
+}
 
 // ブラウザ側でもa.href, titleを確認する
 var validateUrl = (url='') => {
@@ -24,3 +32,11 @@ var validateTitle = (title='') => {
   title = title.replace(/</g, '').replace(/>/g, '');
   return title;
 };
+
+const setAttributeNS = (elem, namespace, attrs) => {
+  const keys = Object.keys(attrs)
+  for (const key of keys) {
+    elem.setAttributeNS(namespace || null, key, attrs[key])
+  }
+  return elem
+}

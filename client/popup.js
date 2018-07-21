@@ -9,9 +9,22 @@
     ]
     for (const target of targets) {
       const url = document.querySelector(target).href
-      console.log(url)
       document.querySelector(target).href = url.replace(
         /^https\:\/\/svgscreenshot\.appspot\.com/, 'http://localhost:8080')
+    }
+  }
+
+  const setCancelEvents = () => {
+    document.querySelector('#img').addEventListener('click', () => {
+      closeWindow()
+    })
+
+    console.log(document.querySelector('#img'))
+
+    const aTags = document.querySelectorAll('a')
+    for (const a of aTags) {
+      console.log(a)
+      a.addEventListener('click', () => { closeWindow() })
     }
   }
 
@@ -35,7 +48,7 @@
     document.querySelector('#open').href = itemUrl(localStorage.item_url)
     var thumbnail = document.querySelector('#img');
     thumbnail.src = localStorage.item_img || '';
-    thumbnail.dataset.clipboardText = itemUrl(localStorage.item_img_url)
+    thumbnail.dataset.clipboardText = itemUrl(localStorage.item_img)
     var err = localStorage.is_error || 'ようこそ';
     if (err !== 'y') {
       // キャプチャ失敗
@@ -46,6 +59,7 @@
       openY();
     }
     replaceToDevUrls()
+    setCancelEvents()
   }, false);
 
   document.querySelector('#open').addEventListener('click', function () {
@@ -56,28 +70,30 @@
     clearBadge();
   }, false);
 
-  document.querySelector('#img').addEventListener('click', function () {
-    window.close();
-  });
-
   // スクリーンショット撮影領域指定
-  document.querySelector('#btn-show-cropper').addEventListener('click', function () {
-    chrome.tabs.getSelected(null, function (tab) {
-      clearBadge();
-      chrome.tabs.sendRequest(tab.id, {
-        event: 'click-context-menu'
-      });
-      window.close();
-    });
-  });
+  // document.querySelector('#btn-show-cropper').addEventListener('click', function () {
+  //   chrome.tabs.getSelected(null, function (tab) {
+  //     clearBadge();
+  //     chrome.tabs.sendRequest(tab.id, {
+  //       event: 'capture-range'
+  //     })
+  //     closeWindow()
+  //   });
+  // });
 
-  // リンクカードを作成
-  document.querySelector('#btn-make-card-scrapbox').addEventListener('click', function () {
+  // 範囲選択による撮影モード
+  chrome.tabs.getSelected(null, function (tab) {
+    chrome.tabs.sendRequest(tab.id, {
+      event: 'capture-range'
+    })
+  })
+
+  const closeWindow = () => {
     chrome.tabs.getSelected(null, function (tab) {
       chrome.tabs.sendRequest(tab.id, {
-        event: 'make-card-scrapbox'
-      });
-      window.close();
-    });
-  });
-})();
+        event: 'cancel-capture-range'
+      })
+    })
+    window.close()
+  }
+})()

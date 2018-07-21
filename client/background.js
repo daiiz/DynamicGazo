@@ -1,134 +1,81 @@
 (function () {
-  var SVGSCREENSHOT_APP = (window.dynamicGazo.env === 'production') ?
-    'https://svgscreenshot.appspot.com' : 'http://localhost:8080'
-  var SVGSCREENSHOT_DEV = ''
-
-  /**
-   * MODE
-   * - capture: 撮影して保存
-   * - scrap: 撮影して保存した後Scrapboxのページを作成
-   */
-  var MODE = 'capture';
-  var SCRAP_BOX_ID = '';
-  var SITE_TITLE = '';
-  var SITE_URL = '';
-  var APP_NAME = ''; // アプリケーションとしてSVG撮影機能を使用する場合
-
-  var showBrowserPopup = (itemUrl='', bgImg='', err=false, msg='') => {
-    localStorage.item_url = itemUrl;
-    var imgUrl = itemUrl.replace('/x/', '/c/x/') + '.png';
-    localStorage.item_img = bgImg;
-    localStorage.item_img_url = imgUrl;
-    localStorage.is_error = err ? msg : 'y';
-
-    var color = err ? 'red' : '#4abb0c';
-    chrome.browserAction.setBadgeBackgroundColor({
-      'color': color
-    });
-
-    var badge = err ? '✗' : '✔';
-    chrome.browserAction.setBadgeText({
-      'text': badge
-    });
-
-    chrome.browserAction.setPopup({
-      'popup': 'popup.html'
-    });
-  };
-
-  const setBadgeCaptureCompleted = () => {
-    chrome.browserAction.setBadgeBackgroundColor({
-      'color': '#4abb0c'
-    });
-    chrome.browserAction.setBadgeText({
-      'text': '○'
-    });
-  };
-
+  let META = {}
   const getSettings = () => {
-    let s = null
-    if (localStorage.svgscreenshot_settings) {
-      s = JSON.parse(localStorage.svgscreenshot_settings)
-    }
-    return s
+    if (!localStorage.svgscreenshot_settings) return null
+    return JSON.parse(localStorage.svgscreenshot_settings)
   }
 
-  var makeScrapboxPage = (xKey='') => {
-    if (xKey.length === 0) return;
-    var s = getSettings();
-    if (s === null || s.use_scrapbox === 'no') return;
+  const uploadToGyazo = async ({ svgScreenshotImageId }) => {
+    const {baseUri, title, base64Img, devicePixelRatio} = META
+    const gyazoImageId = await window.dynamicGazo.uploadToGyazo({
+      title,
+      referer: baseUri,
+      image: base64Img,
+      scale: devicePixelRatio,
+      svgScreenshotImageId
+    })
+  }
 
-    const xUrl = SVGSCREENSHOT_APP + `/c/x/${xKey}.png`;
-    // Scrapbox id
-    var scrapboxId = SCRAP_BOX_ID || s.id_scrapbox[0];
-    var title = encodeURIComponent(SITE_TITLE.trim());
-    var body = encodeURIComponent(`[${xUrl}]\n[${SITE_TITLE} ${SITE_URL}]`);
-    var scrapboxBookmarkletUrl = `https://scrapbox.io/${scrapboxId}/${title}?body=${body}`;
-    chrome.tabs.create({
-      url: scrapboxBookmarkletUrl
-    }, null);
-  };
-
-  // スクリーンショットをアップロードする
-  const uploadToDynamicGazo = async (svgtag, svgBgBase64Img, devicePixelRatio) => {
-    SITE_TITLE = svgtag.getAttribute('data-title') || ''
-    SITE_URL = svgtag.getAttribute('data-url') || ''
-    const s = getSettings()
-
-    const uploadToGyazo = async (dynamicGazoUrl) => {
-      // post to gyazo.com
-      const gyazoImageId = await window.dynamicGazo.uploadToGyazo({
-        title: SITE_TITLE,
-        referer: SITE_URL,
-        image: svgBgBase64Img,
-        scale: devicePixelRatio,
-        dynamicGazoUrl
+  const uploadToGyazoSVG = async ({ devicePixelRatio }) => {
+    const {baseUri, title, base64Img} = META
+    const svg = createSVGTag()
+    const res = await dynamicGazo.uploadToDynamicGazo({
+      svg,
+      title,
+      referer: baseUri,
+      base64Img,
+      devicePixelRatio
+    })
+    if (res.status === 200 && res.data.x_key) {
+      updateLocalStorage({
+        item_url: `${window.dynamicGazo.appOrigin}/x/${res.data.x_key}`,
+        item_img: `${window.dynamicGazo.appOrigin}/c/x/${res.data.x_key}.png`,
+        message: 'y'
       })
+      setBadgeUploadingToGyazo()
+      await uploadToGyazo({ svgScreenshotImageId: res.data.x_key })
+      clearBadge()
+    } else {
+      // XXX: 適切なstatus codeが返ってきていない！
+      handleError(res.data)
     }
+    return res
+  }
 
-    // post to webapp
-    $.ajax({
-      url: `${SVGSCREENSHOT_APP}/api/uploadsvg`,
-      type: 'POST',
-      dataType: 'json',
-      contentType: 'application/json; charset=utf-8',
-      data: JSON.stringify({
-        svg: svgtag.outerHTML,
-        base64png: svgBgBase64Img,
-        orgurl: SITE_URL,
-        title: SITE_TITLE,
-        viewbox: svgtag.getAttribute('viewBox'),
-        public: 'yes',
-        // gyazo: 'yes',
-        // gyazo_image_id: gyazoImageId,
-        dpr: devicePixelRatio,
-        app_name: APP_NAME
-      })
-    }).success(data => {
-      var stat = data.status;
-      if (stat === 'ok-saved-new-screenshot') {
-        const itemUrl = SVGSCREENSHOT_APP + data.url
-        showBrowserPopup(itemUrl, svgBgBase64Img, false)
 
-        if (MODE === 'scrap') makeScrapboxPage(data.x_key)
-        if (window.dynamicGazo.env === 'production' && s.use_gyazo !== 'no') {
-          uploadToGyazo(itemUrl)
-        }
-      }else if (stat === 'exceed-screenshots-upper-limit') {
-        showBrowserPopup('', '', true, "ファイルの上限数に達しています");
-      }else if (stat == 'no-login') {
-        showBrowserPopup('', '', true, "ウェブアプリにログインしていません");
-      }else {
-        showBrowserPopup('', '', true, "アップロードに失敗しました");
+  const updateLocalStorage = ({item_url, item_img, message} = {item_url: '', item_img: ''}) => {
+    localStorage.item_url = item_url
+    localStorage.item_img = item_img
+    localStorage.is_error = message
+  }
+
+  const handleError = ({ status }) => {
+    chrome.browserAction.setBadgeBackgroundColor({ color: 'red' })
+    chrome.browserAction.setBadgeText({ text: '😇' })
+    switch (status) {
+      case 'exceed-screenshots-upper-limit': {
+        updateLocalStorage({
+          message: 'ファイルの上限数に達しています。'
+        })
+        break
       }
-      console.log(data);
-    }).fail (data => {
-      showBrowserPopup('', '', true, "Unknown error");
-    });
-  };
+      case 'no-login': {
+        updateLocalStorage({
+          message: 'ウェブアプリにログインしていません。'
+        })
+        break
+      }
+      default: {
+        updateLocalStorage({
+          message: 'アップロードに失敗しました。'
+        })
+        break
+      }
+    }
+  }
 
   // Canvasに画像をセットして，必要部分のみ切り出す
-  var renderImage = function (linkdata, base64img, devicePixelRatio) {
+  const renderImage = function (linkdata, base64Img, devicePixelRatio) {
     var rat = devicePixelRatio;
     var canvas = document.querySelector("#cav");
     var pos_cropper = linkdata.cropperRect;
@@ -143,46 +90,64 @@
     var img = new Image();
     img.onload = function () {
       ctx.drawImage(img, rat * pos_cropper.orgX, rat * pos_cropper.orgY, rat * w, rat * h,
-       0, 0, rat * w, rat * h);
-      // ctx.drawImage(img, pos_cropper.orgX, pos_cropper.orgY, w, h,
-      //   0, 0, w, h);
-      var screenshot = canvas.toDataURL('image/png');
-      // SVGスクリーンショットタグをつくる
-      makeSVGtag(
+       0, 0, rat * w, rat * h)
+      const screenshot = canvas.toDataURL('image/png')
+      keepMetaData(
         linkdata.aTagRects,
+        linkdata.elementRects,
         linkdata.text,
-        screenshot,
         w,
         h,
         baseUri,
         title,
-        rat);
+        rat,
+        screenshot)
+      uploadToGyazoSVG({
+        devicePixelRatio: rat
+      })
     };
-    img.src = base64img;
+    img.src = base64Img;
   };
 
+  const keepMetaData = (aTagRects, elementRects, text, width, height, baseUri, title, devicePixelRatio, base64Img) => {
+    META = { aTagRects, elementRects, text, width, height, baseUri, title, devicePixelRatio, base64Img }
+  }
+
   // SVGタグを生成する
-  var makeSVGtag = function (
-    aTagRects, text, base64img, width, height, baseUri, title, devicePixelRatio) {
+  const createSVGTag = () => {
+    const {aTagRects, elementRects, text, width, height, baseUri, title, devicePixelRatio, base64Img} = META
     var svgns  = 'http://www.w3.org/2000/svg';
     var hrefns = 'http://www.w3.org/1999/xlink';
+
     // root SVG element
     var rootSVGtag = document.createElementNS(svgns, 'svg');
-    rootSVGtag.setAttributeNS(null, 'version', '1.1');
     rootSVGtag.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     rootSVGtag.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-    rootSVGtag.setAttributeNS(null, 'class', 'svg-screenshot');
-    rootSVGtag.setAttributeNS(null, 'viewBox', '0 0 ' + width + ' ' + height);
-    // image element
-    var img = document.createElementNS(svgns, 'image');
-    img.setAttributeNS(null, 'width', width);
-    img.setAttributeNS(null, 'height', height);
-    img.setAttributeNS(null, 'x', 0);
-    img.setAttributeNS(null, 'y', 0);
-    img.setAttributeNS(null, 'data-selectedtext', text);
-    img.setAttributeNS(hrefns, 'href', base64img);
+    setAttributeNS(rootSVGtag, null, {
+      version: '1.1',
+      class: 'svg-screenshot',
+      viewBox: `0 0 ${width} ${height}`
+    })
 
-    // rootSVGtag.appendChild(img);
+    // image element
+    var img = document.createElementNS(svgns, 'image')
+    setAttributeNS(img, null, {
+      width,
+      height,
+      x: 0,
+      y: 0,
+      'data-selectedtext': text
+    })
+    img.setAttributeNS(hrefns, 'href', base64Img)
+    rootSVGtag.appendChild(img);
+
+    // style
+    const style = document.createElementNS(svgns, 'style')
+    style.innerHTML = 'a { cursor: pointer }'
+    rootSVGtag.appendChild(style)
+
+    // foreignObject
+    insertForeignObjects(rootSVGtag, elementRects)
 
     // 外部ページヘのリンク用のrect elements
     for (var i = 0; i < aTagRects.length; i++) {
@@ -196,33 +161,123 @@
 
       // rect element
       var rect = document.createElementNS(svgns, 'rect');
-      rect.setAttributeNS(null, 'width', aTagRect.width);
-      rect.setAttributeNS(null, 'height', aTagRect.height);
-      rect.setAttributeNS(null, 'x', aTagRect.x);
-      rect.setAttributeNS(null, 'y', aTagRect.y);
-      rect.setAttributeNS(null, 'fill', 'rgba(0, 0, 0, 0)');
+      setAttributeNS(rect, null, {
+        width: aTagRect.width,
+        height: aTagRect.height,
+        x: aTagRect.x,
+        y: aTagRect.y,
+        fill: 'rgba(0, 0, 0, 0)'
+      })
 
       // text element
-      var text = document.createElementNS(svgns, 'text');
-      text.setAttributeNS(null, 'x', aTagRect.x);
-      text.setAttributeNS(null, 'y', aTagRect.y + aTagRect.height);
+      const _text = document.createElementNS(svgns, 'text');
+      _text.setAttributeNS(null, 'x', aTagRect.x);
+      _text.setAttributeNS(null, 'y', aTagRect.y + aTagRect.height);
       var txt = validateTitle(aTagRect.text);
-      text.textContent = txt;
-      text.setAttributeNS(null, 'fill', 'rgba(0, 0, 0, 0)');
+      _text.textContent = txt;
+      _text.setAttributeNS(null, 'fill', 'rgba(0, 0, 0, 0)');
 
       a.appendChild(rect);
-      a.appendChild(text);
+      a.appendChild(_text);
       rootSVGtag.appendChild(a);
     }
 
-    rootSVGtag.setAttributeNS(null, 'width', width);
-    rootSVGtag.setAttributeNS(null, 'height', height);
-    rootSVGtag.setAttributeNS(null, 'data-url', validateUrl(baseUri));
-    rootSVGtag.setAttributeNS(null, 'data-title', validateTitle(title));
+    insertSource(rootSVGtag, baseUri, title, height)
+    setAttributeNS(rootSVGtag, null, {
+      width,
+      height,
+      'data-url': validateUrl(baseUri),
+      'data-title': validateTitle(title)
+    })
 
-    // スクリーンショットをアップロード
-    uploadToDynamicGazo(rootSVGtag, base64img, devicePixelRatio);
-  };
+    return rootSVGtag
+  }
+
+  const createForeignObject = (elem, rect) => {
+    const svgns = 'http://www.w3.org/2000/svg'
+    const xhtmlns = 'http://www.w3.org/1999/xhtml'
+
+    const foreignObject = document.createElementNS(svgns, 'foreignObject')
+    foreignObject.setAttribute('xmlns', svgns)
+    setAttributeNS(foreignObject, null, {
+      width: rect.position.width,
+      height: rect.position.height,
+      x: rect.x,
+      y: rect.y
+    })
+
+    const html = document.createElementNS(xhtmlns, 'html')
+    html.setAttribute('xmlns', xhtmlns)
+
+    elem.setAttribute('width', rect.position.width)
+    elem.setAttribute('height', rect.position.height)
+    html.appendChild(elem)
+    foreignObject.appendChild(html)
+    return foreignObject
+  }
+
+
+  const insertForeignObjects = (rootSVGtag, elementRects) => {
+    const svgns = 'http://www.w3.org/2000/svg'
+    const insertImgs = () => {
+      const imgs = elementRects.img
+      for (const rect of imgs) {
+        const img = document.createElementNS(svgns, 'img')
+        // Gyazo以外の画像は無視
+        if (rect.url.match(/gyazo\.com\//i) === null) continue
+        // 静止画像の場合は無視
+        if (rect.url.match(/\.(svg|png|jpe?g|bmp)$/i) !== null) continue
+        img.setAttribute('src', rect.url)
+        img.setAttribute('alt', '')
+        if (rect.css) img.setAttribute('style', styleStr(rect.css))
+        const fo = createForeignObject(img, rect)
+        rootSVGtag.appendChild(fo)
+      }
+    }
+    insertImgs()
+  }
+
+  const insertSource = (rootSVGtag, uri, title, height) => {
+    const svgns = 'http://www.w3.org/2000/svg'
+    const hrefns = 'http://www.w3.org/1999/xlink'
+
+    // style
+    const style = document.createElementNS(svgns, 'style')
+    style.innerHTML = `
+      text.source {
+        fill: #888888;
+        font-size: 11px;
+        font-weight: 400;
+        text-decoration: none;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+      text.source:hover {
+        text-decoration: underline;
+        fill: #2962FF;
+      }`
+    const a = document.createElementNS(svgns, 'a')
+    a.setAttributeNS(hrefns, 'href', validateUrl(uri))
+    a.setAttributeNS(null, 'target', '_blank')
+    a.setAttributeNS(null, 'class', 'source')
+
+    const url = document.createElementNS(svgns, 'text')
+    url.setAttributeNS(null, 'x', 4)
+    url.setAttributeNS(null, 'y', height - 4)
+    url.textContent = validateTitle(title)
+    url.setAttributeNS(null, 'class', 'source')
+    a.appendChild(url)
+    rootSVGtag.appendChild(style)
+    rootSVGtag.appendChild(a)
+  }
+
+  const styleStr = styles => {
+    let str = ''
+    const attrs = Object.keys(styles)
+    for (const attr of attrs) {
+      str += `${attr}:${styles[attr]}`
+    }
+    return str
+  }
 
   // ポップアップ画面から命令を受ける
   chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -232,71 +287,28 @@
       // スクリーンショットの撮影
       var linkdata = opts.sitedata;
       chrome.tabs.captureVisibleTab({ format: 'png' }, function (dataUrl) {
-        setBadgeCaptureCompleted();
-        MODE = opts.mode;
-        APP_NAME = opts.app || '';
-        SCRAP_BOX_ID = opts.scrapbox_box_id;
-        renderImage(linkdata, dataUrl, opts.dpr);
-      });
-    }else if (request.command === 'get-scrapbox-list') {
-      // scrapboxボックス名リストを返す
-      var scrapboxIds = [];
-      var scrapboxEnabled = 'no';
-      var s = getSettings();
-      if (s != null) {
-        scrapboxIds = s.id_scrapbox;
-        scrapboxEnabled = s.use_scrapbox;
-      }
-      sendResponse({
-        scrapbox_enabled: scrapboxEnabled,
-        scrapbox_ids: scrapboxIds
+        setBadgeCaptureCompleted()
+        renderImage(linkdata, dataUrl, opts.dpr)
       });
     }
   });
-
-
-  // browser_actionボタンが押されたとき
-  chrome.browserAction.onClicked.addListener(tab => {
-    chrome.tabs.create({
-      url: SVGSCREENSHOT_APP
-    }, null);
-  });
-
-  var getContextMenuTitle = (title) => {
-    var prefix = SVGSCREENSHOT_DEV;
-    return prefix + title;
-  };
 
   var initScreenShotMenu = () => {
     // ユーザーが閲覧中のページに専用の右クリックメニューを設ける
     // ウェブページ向け
     chrome.contextMenus.create({
-      title: getContextMenuTitle('DynamicGazoを撮る'),
+      title: 'Capture whole page',
       contexts: [
         'page',
         'selection'
       ],
       onclick: function (clicked, tab) {
-        clearBadge();
+        clearBadge()
         chrome.tabs.sendRequest(tab.id, {
-          event: 'click-context-menu'
+          event: 'capture-whole-page'
         });
       }
-    });
-    // ウェブページ上の画像向け
-    chrome.contextMenus.create({
-      title: getContextMenuTitle('DynamicGazoを撮る'),
-      contexts: [
-        'image'
-      ],
-      onclick: function (clicked, tab) {
-        clearBadge();
-        chrome.tabs.sendRequest(tab.id, {
-          event: 'click-context-menu',
-          elementType: 'image'
-        });
-      }
-    });
+    })
   };
 
   initScreenShotMenu();
@@ -307,5 +319,5 @@
         event: 'updated-location-href'
       });
     }
-  });
+  })
 })();

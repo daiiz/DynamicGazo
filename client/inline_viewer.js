@@ -8,7 +8,8 @@ class InlineViewer {
       'https://svgscreenshot.appspot.com' : 'http://localhost:8080'
     this.gyazo = 'https://gyazo.com'
     this.svgScreenShotUrlPatterns = [
-      `${this.appUrl}/c/x/(.+)`
+      `${this.appUrl}/c/x/(.+)`,
+      `${this.appUrl}/thumb/(.+)`
     ]
     /* 直近で検出した画像のID */
     this.latestImageId = null
@@ -23,7 +24,7 @@ class InlineViewer {
       let reg = new RegExp(pattern);
       let matched = src.match(reg);
       if (matched && matched.length >= 2) {
-        imgId = matched[1].split('.')[0];
+        imgId = matched[1].split('#')[0].split('.')[0]
         break;
       }
     }
@@ -50,11 +51,6 @@ class InlineViewer {
       }
       $cover = $(`<div id="${coverId}" class="daiz-ss-iv-cover ${optionClassName}">
         <div class="daiz-ss-iv-svg">
-        </div>
-        <div class="daiz-ss-iv-cover-foot">
-          <a href="#" class="svgss footlink" target="_blank">DynamicGazo</a>
-          <a href="#" class="gyazo footlink" target="_blank">Gyazo</a>
-          <a href="#" class="jump" target="_blank">Original site</a>
         </div>
       </div>`);
 
@@ -101,22 +97,6 @@ class InlineViewer {
       // coverWidth, coverHeight: サムネイルのサイズ
       svg.setAttribute('width', coverWidth);
       svg.setAttribute('height', coverHeight);
-
-      // cover footerを設定
-      var $cFoot = $cover.find('.daiz-ss-iv-cover-foot');
-      $cFoot.find('a.jump').attr('href', validateUrl(orgUrl));
-      $cFoot.find('a.jump')[0].innerText = validateTitle(title);
-      $cFoot.find('a.svgss').attr('href', `${this.appUrl}/x/${data.screenshot_id}`);
-      $cFoot.find('a.gyazo').attr('href', `${this.gyazo}/${data.gyazo_image_id}`);
-      if (!data.gyazo_image_id) {
-        $cFoot.find('a.gyazo').hide();
-      }
-      if (appName !== null && appName.length > 0) {
-        $cFoot.hide();
-      }else {
-        $cFoot.show();
-      }
-
       $cover.show();
     });
   }

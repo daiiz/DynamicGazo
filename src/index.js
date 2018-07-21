@@ -1,15 +1,38 @@
 const AnchorsInArea = require('anchors-in-area')
+const axios = require('axios')
 
 window.dynamicGazo = {
-  env: process.env.NODE_ENV
+  env: process.env.NODE_ENV,
+  appOrigin: (process.env.NODE_ENV === 'production') ?
+    'https://svgscreenshot.appspot.com' : 'http://localhost:8080'
 }
 
 dynamicGazo.AnchorsInArea = AnchorsInArea
 
-dynamicGazo.uploadToGyazo = async ({scale, image, referer, title, dynamicGazoUrl}) => {
+dynamicGazo.uploadToDynamicGazo = async ({svg, title, referer, base64Img, devicePixelRatio}) => {
+  let res
+  try {
+    res = await axios.post(`${dynamicGazo.appOrigin}/api/uploadsvg`, {
+      svg: svg.outerHTML,
+      base64png: base64Img,
+      orgurl: referer,
+      title,
+      viewbox: svg.getAttribute('viewBox'),
+      public: 'yes',
+      dpr: devicePixelRatio
+    })
+  } catch (err) {
+    console.error(err)
+  }
+  return res
+}
+
+dynamicGazo.uploadToGyazo = async ({scale, image, referer, title, svgScreenshotImageId}) => {
   const apiEndpoint = `https://upload.gyazo.com/api/upload/easy_auth`
   const clientId = 'a9544994509725a7ecceb7381661274751b5b31f006c7788c1d88517c13d1ebe'
+  if (dynamicGazo.env !== 'production') return
 
+  const dynamicGazoUrl = `${dynamicGazo.appOrigin}/x/${svgScreenshotImageId}`
   const formdata = new window.FormData()
   formdata.append('client_id', clientId)
   formdata.append('image_url', image)
