@@ -31,7 +31,6 @@
     "browserify": "^14.4.0",
     "envify": "^4.1.0",
     "npm-run-all": "^4.0.2",
-    "unirest": "^0.5.1",
     "watchify": "^3.11.0"
   }
 }
