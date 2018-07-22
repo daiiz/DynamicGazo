@@ -1,23 +1,22 @@
 (function () {
   let META = {}
-  const getSettings = () => {
-    if (!localStorage.svgscreenshot_settings) return null
-    return JSON.parse(localStorage.svgscreenshot_settings)
-  }
 
-  const uploadToGyazo = async ({ svgScreenshotImageId }) => {
+  const uploadToGyazo = async ({svgScreenshotImageId, hashTag}) => {
     const {baseUri, title, base64Img, devicePixelRatio} = META
-    const gyazoImageId = await window.dynamicGazo.uploadToGyazo({
+    await window.dynamicGazo.uploadToGyazo({
       title,
       referer: baseUri,
       image: base64Img,
       scale: devicePixelRatio,
-      svgScreenshotImageId
+      svgScreenshotImageId,
+      hashTag
     })
   }
 
-  const uploadToGyazoSVG = async ({ devicePixelRatio }) => {
+  const uploadToSVGScreenshot = async ({devicePixelRatio}) => {
     const {baseUri, title, base64Img} = META
+    const {useGyazo, gyazoHashtag} = readOptions()
+
     const svg = createSVGTag()
     const res = await dynamicGazo.uploadToDynamicGazo({
       svg,
@@ -32,8 +31,14 @@
         item_img: `${window.dynamicGazo.appOrigin}/c/x/${res.data.x_key}.png`,
         message: 'y'
       })
-      setBadgeUploadingToGyazo()
-      await uploadToGyazo({ svgScreenshotImageId: res.data.x_key })
+
+      if (useGyazo === 'yes') {
+        setBadgeUploadingToGyazo()
+        await uploadToGyazo({
+          svgScreenshotImageId: res.data.x_key,
+          hashTag: gyazoHashtag || ''
+        })
+      }
       clearBadge()
     } else {
       // XXX: 適切なstatus codeが返ってきていない！
@@ -102,7 +107,7 @@
         title,
         rat,
         screenshot)
-      uploadToGyazoSVG({
+      uploadToSVGScreenshot({
         devicePixelRatio: rat
       })
     };

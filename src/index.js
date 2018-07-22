@@ -9,6 +9,7 @@ window.dynamicGazo = {
 
 dynamicGazo.AnchorsInArea = AnchorsInArea
 
+// upload to SVGScreenshot
 dynamicGazo.uploadToDynamicGazo = async ({svg, title, referer, base64Img, devicePixelRatio}) => {
   let res
   try {
@@ -27,7 +28,9 @@ dynamicGazo.uploadToDynamicGazo = async ({svg, title, referer, base64Img, device
   return res
 }
 
-dynamicGazo.uploadToGyazo = async ({scale, image, referer, title, svgScreenshotImageId}) => {
+// upload to Gyazo
+dynamicGazo.uploadToGyazo = async (
+  {scale, image, referer, title, svgScreenshotImageId, hashTag}) => {
   const apiEndpoint = `https://upload.gyazo.com/api/upload/easy_auth`
   const clientId = 'a9544994509725a7ecceb7381661274751b5b31f006c7788c1d88517c13d1ebe'
   if (dynamicGazo.env !== 'production') return
@@ -39,7 +42,7 @@ dynamicGazo.uploadToGyazo = async ({scale, image, referer, title, svgScreenshotI
   formdata.append('title', title)
   formdata.append('referer_url', referer)
   formdata.append('scale', scale)
-  formdata.append('desc', `\n${dynamicGazoUrl}\n#DynamicGazo`)
+  formdata.append('desc', `\n${dynamicGazoUrl}\n${hashTag}`)
 
   const response = await window.fetch(apiEndpoint, {
     method: 'POST',

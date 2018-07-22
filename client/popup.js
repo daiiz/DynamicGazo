@@ -19,12 +19,20 @@
       closeWindow()
     })
 
-    console.log(document.querySelector('#img'))
-
     const aTags = document.querySelectorAll('a')
     for (const a of aTags) {
-      console.log(a)
       a.addEventListener('click', () => { closeWindow() })
+    }
+  }
+
+  const setGyazoCollectionLink = () => {
+    const {useGyazo, gyazoHashtag} = readOptions()
+    const gayzoCollection = document.querySelector('#gyazo-collection')
+    if (useGyazo === 'yes') {
+      if (gyazoHashtag.length === 0) return
+      gayzoCollection.href = `https://gyazo.com/search/${encodeURIComponent(gyazoHashtag)}`
+    } else {
+      gayzoCollection.remove()
     }
   }
 
@@ -34,15 +42,15 @@
     return url.replace(/^https\:\/\/svgscreenshot\.appspot\.com/, 'http://localhost:8080')
   }
 
-  var openN = () => {
+  const openN = () => {
     document.querySelector('#n').style.display = 'block';
     document.querySelector('#y').style.display = 'none';
-  };
+  }
 
-  var openY = () => {
+  const openY = () => {
     document.querySelector('#y').style.display = 'block';
     document.querySelector('#n').style.display = 'none';
-  };
+  }
 
   window.addEventListener('load', function () {
     document.querySelector('#open').href = itemUrl(localStorage.item_url)
@@ -59,6 +67,7 @@
       openY();
     }
     replaceToDevUrls()
+    setGyazoCollectionLink()
     setCancelEvents()
   }, false);
 
@@ -69,17 +78,6 @@
   document.querySelector('#login').addEventListener('click', function () {
     clearBadge();
   }, false);
-
-  // スクリーンショット撮影領域指定
-  // document.querySelector('#btn-show-cropper').addEventListener('click', function () {
-  //   chrome.tabs.getSelected(null, function (tab) {
-  //     clearBadge();
-  //     chrome.tabs.sendRequest(tab.id, {
-  //       event: 'capture-range'
-  //     })
-  //     closeWindow()
-  //   });
-  // });
 
   // 範囲選択による撮影モード
   chrome.tabs.getSelected(null, function (tab) {
