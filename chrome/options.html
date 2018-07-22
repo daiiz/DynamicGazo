@@ -8,15 +8,29 @@
       #gyazo_hashtag {
         margin-left: 10px;
       }
+      a {
+        color: #1555f3;
+        text-decoration: none;
+      }
+      video {
+        height: 300px;
+        margin: 15px 20px 0 20px;
+      }
     </style>
   </head>
   <body>
+    <div>
+      The following feature can be used only when logged in to
+      <a href='https://gyazo.com' target='_blank'>Gyazo</a>.
+    </div>
     <p>
       <input type="checkbox" id="use_gyazo">
         Gyazoにもアップロードする
         <input id="gyazo_hashtag" type="text" value="#SVGScreenshot" placeholder="#Hashtag">
+      <br>
+      <video controls src="https://i.gyazo.com/7e48b359e8099744cda02d4bce1f5538.mp4" />
     </p>
-    <input type="button" value="保存" id="btn_save">
+    <input type="button" value="Save" id="btn_save">
     <br>
     <br>
     <script src="./build/options.js"></script>
