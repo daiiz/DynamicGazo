@@ -13,6 +13,11 @@ const setBadgeUploadingToGyazo = () => {
   chrome.browserAction.setBadgeText({ text: 'G' })
 }
 
+const readOptions = () => {
+  if (!localStorage.svgscreenshot_settings) return {}
+  return JSON.parse(localStorage.svgscreenshot_settings)
+}
+
 // ブラウザ側でもa.href, titleを確認する
 var validateUrl = (url='') => {
   // http, https で始まるもののみOK
